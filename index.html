@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Quantum — AI &amp; Statistics Research Lab</title>
+<meta name="description" content="Black Quantum is an independent research lab working at the intersection of statistics, machine learning, and financial markets.">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-soft: #0a0a0c;
+    --surface: #101014;
+    --text: #ededf0;
+    --muted: #8b8b96;
+    --accent: #a78bfa;
+    --accent-dim: #6d5bb8;
+    --border: #1e1e26;
+    --max: 1040px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--accent-dim); color: #fff; }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky; top: 0;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  .nav-inner {
+    max-width: var(--max); margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 650; letter-spacing: 0.02em; color: var(--text);
+    font-size: 15.5px;
+  }
+  .brand .mark {
+    width: 22px; height: 22px; border-radius: 6px;
+    background:
+      radial-gradient(circle at 30% 30%, var(--accent) 0%, transparent 55%),
+      radial-gradient(circle at 72% 72%, var(--accent-dim) 0%, transparent 60%),
+      #000;
+    border: 1px solid var(--border);
+  }
+  .nav-inner ul { display: flex; gap: 26px; list-style: none; }
+  .nav-inner ul a { color: var(--muted); font-size: 14px; letter-spacing: 0.02em; }
+  .nav-inner ul a:hover { color: var(--text); text-decoration: none; }
+
+  main { max-width: var(--max); margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    padding: 140px 0 110px;
+    position: relative;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: -40px -200px 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 10%, rgba(167,139,250,0.10), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(109,91,184,0.08), transparent 70%);
+    pointer-events: none;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700; letter-spacing: -0.03em; line-height: 1.12;
+    max-width: 18ch;
+  }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p.sub {
+    color: var(--muted); margin-top: 26px; font-size: 1.18rem;
+    max-width: 56ch;
+  }
+  .hero .cta-row { margin-top: 40px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 11px 24px; border-radius: 8px;
+    font-size: 15px; font-weight: 550; letter-spacing: 0.01em;
+  }
+  .btn.primary { background: var(--text); color: #000; }
+  .btn.primary:hover { background: #fff; text-decoration: none; }
+  .btn.ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn.ghost:hover { border-color: var(--accent-dim); text-decoration: none; }
+
+  /* ---------- sections ---------- */
+  section { padding: 84px 0; border-top: 1px solid var(--border); }
+  .kicker {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--accent); font-weight: 600; margin-bottom: 14px;
+  }
+  section h2 {
+    font-size: 1.9rem; font-weight: 650; letter-spacing: -0.02em;
+    margin-bottom: 18px; max-width: 24ch;
+  }
+  section > p.lede { color: var(--muted); max-width: 62ch; margin-bottom: 40px; font-size: 1.06rem; }
+
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  }
+  .card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px;
+    transition: border-color 0.2s ease;
+  }
+  .card:hover { border-color: #2e2e3c; }
+  .card .num {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--accent-dim); font-size: 13px; margin-bottom: 14px; display: block;
+  }
+  .card h3 { font-size: 1.12rem; font-weight: 620; margin-bottom: 10px; letter-spacing: -0.01em; }
+  .card p { color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+  /* ---------- principles ---------- */
+  .principles { display: grid; gap: 0; }
+  .principle {
+    display: grid; grid-template-columns: 200px 1fr; gap: 24px;
+    padding: 26px 0; border-bottom: 1px solid var(--border);
+  }
+  .principle:last-child { border-bottom: none; }
+  .principle h3 { font-size: 1.02rem; font-weight: 620; }
+  .principle p { color: var(--muted); font-size: 15.5px; }
+
+  /* ---------- publications ---------- */
+  ul.pubs { list-style: none; }
+  ul.pubs li {
+    padding: 22px 0; border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  ul.pubs li:last-child { border-bottom: none; }
+  ul.pubs .title { font-weight: 600; font-size: 1.05rem; }
+  ul.pubs .venue { color: var(--muted); font-size: 14.5px; }
+
+  /* ---------- contact ---------- */
+  .contact-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+  .contact-links a {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 20px; font-size: 15px; color: var(--text);
+  }
+  .contact-links a:hover { border-color: var(--accent-dim); text-decoration: none; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 28px; text-align: center;
+    color: var(--muted); font-size: 13.5px;
+  }
+
+  @media (max-width: 640px) {
+    header.hero { padding: 90px 0 70px; }
+    section { padding: 60px 0; }
+    .principle { grid-template-columns: 1fr; gap: 8px; }
+    .nav-inner ul { gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <span class="brand"><span class="mark"></span>BLACK QUANTUM</span>
+    <ul>
+      <li><a href="#research">Research</a></li>
+      <li><a href="#approach">Approach</a></li>
+      <li><a href="#publications">Publications</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main>
+  <header class="hero">
+    <h1>Statistics and machine learning, <em>taken seriously</em>.</h1>
+    <p class="sub">
+      Black Quantum is an independent research lab working at the intersection of
+      statistical theory, machine learning, and financial markets — from asymptotic
+      proofs to production systems.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#research">Our research</a>
+      <a class="btn ghost" href="#contact">Get in touch</a>
+    </div>
+  </header>
+
+  <section id="research">
+    <div class="kicker">Research</div>
+    <h2>What we work on</h2>
+    <p class="lede">
+      Our core programme is inference for high-frequency, asynchronously observed
+      data — a problem where classical statistics breaks down and careful theory
+      pays off in live systems.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <span class="num">01</span>
+        <h3>High-frequency covariance estimation</h3>
+        <p>Covariance and dependence estimation under asynchronous sampling and
+        microstructure noise, with rigorous asymptotic guarantees carried through
+        to deployable estimators.</p>
+      </div>
+      <div class="card">
+        <span class="num">02</span>
+        <h3>Market microstructure</h3>
+        <p>Reconstruction and modelling of limit-order-book dynamics from raw
+        order-by-order data; microstructure-aware features for prediction on
+        futures markets.</p>
+      </div>
+      <div class="card">
+        <span class="num">03</span>
+        <h3>Machine learning for noisy, non-stationary data</h3>
+        <p>ML methods that respect the statistical structure of financial data —
+        regime change, heavy tails, and the ever-present risk of overfitting.</p>
+      </div>
+      <div class="card">
+        <span class="num">04</span>
+        <h3>Rigorous strategy evaluation</h3>
+        <p>Walk-forward validation, look-ahead detection, and formally verified
+        research pipelines. We treat evaluation methodology as a research problem
+        in its own right.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="approach">
+    <div class="kicker">Approach</div>
+    <h2>How we do research</h2>
+    <div class="principles">
+      <div class="principle">
+        <h3>Theory first</h3>
+        <p>Estimators come with proofs, not just backtests. If we can't state the
+        assumptions, we don't trust the result.</p>
+      </div>
+      <div class="principle">
+        <h3>Adversarial evaluation</h3>
+        <p>Every positive result is treated as a bug until it survives walk-forward
+        testing, leakage audits, and independent replication.</p>
+      </div>
+      <div class="principle">
+        <h3>Theory to deployment</h3>
+        <p>Research isn't finished at the paper. We carry methods through
+        simulation, real data, and production infrastructure.</p>
+      </div>
+      <div class="principle">
+        <h3>Formal verification</h3>
+        <p>Where the mathematics matters most, we machine-check it — bringing
+        proof assistants into quantitative finance.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="publications">
+    <div class="kicker">Publications</div>
+    <h2>Selected work</h2>
+    <ul class="pubs">
+      <li>
+        <span class="title">Covariance estimation for asynchronously observed high-frequency data</span>
+        <span class="venue">DPhil Thesis, University of Oxford, 2016</span>
+      </li>
+      <li>
+        <span class="title">More publications coming soon</span>
+        <span class="venue">Working papers in preparation</span>
+      </li>
+    </ul>
+  </section>
+
+  <section id="contact">
+    <div class="kicker">Contact</div>
+    <h2>Work with us</h2>
+    <p class="lede">
+      We're interested in collaborations, consulting on high-frequency statistics
+      and ML systems, and conversations with people who care about getting the
+      details right.
+    </p>
+    <div class="contact-links">
+      <a href="mailto:yang.maths@gmail.com">Email us</a>
+      <a href="#" title="Add GitHub URL">GitHub</a>
+      <a href="#" title="Add LinkedIn URL">LinkedIn</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  &copy; 2026 Black Quantum. All rights reserved.
+</footer>
+
+</body>
+</html>
