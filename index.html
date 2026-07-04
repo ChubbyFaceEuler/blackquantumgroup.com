@@ -212,6 +212,7 @@
   .grid.reveal-group.in .card:nth-child(5) { transition-delay: 0.32s; }
   .grid.reveal-group.in .card:nth-child(6) { transition-delay: 0.40s; }
   .grid.reveal-group.in .card:nth-child(7) { transition-delay: 0.48s; }
+  .grid.reveal-group.in .card:nth-child(8) { transition-delay: 0.56s; }
 
   /* ---------- domains ---------- */
   .thesis {
@@ -423,6 +424,13 @@
         <p>Packets are timestamped, but every machine keeps its own drifting clock. Here
         the twist inverts: the clock relationship itself is the unknown you must estimate.</p>
         <div class="fails"><b>Today:</b> NTP breaks on asymmetric paths — the shared clock is provably unrecoverable.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Autonomous driving</span>
+        <h3>Sensor fusion</h3>
+        <p>Camera, LiDAR, and radar each sample the road at their own rate — no two ever
+        capture the same instant. Fusing them safely means reconciling streams that never line up.</p>
+        <div class="fails"><b>Today:</b> interpolate timestamps to force alignment — misalignment surfaces as phantom objects.</div>
       </div>
       <div class="card domain">
         <span class="field">Finance</span>
