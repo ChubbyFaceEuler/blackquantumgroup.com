@@ -277,6 +277,7 @@
       <li><a href="#demo">Demo</a></li>
       <li><a href="#approach">Approach</a></li>
       <li><a href="#publications">Publications</a></li>
+      <li><a href="#notes">Notes</a></li>
       <li><a href="#news">News</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
@@ -345,13 +346,26 @@
     <div class="kicker reveal">Interactive</div>
     <h2 class="reveal">The Epps effect, live</h2>
     <p class="lede reveal">
-      Two simulated assets with true correlation 0.80, each trading at its own random
-      times. Sample both on a common grid (previous-tick) and estimate the correlation
-      of their returns: as the grid gets finer, the estimate collapses toward zero —
-      the <em>Epps effect</em>. This is the failure mode our estimators are built to
-      fix. Drag the slider.
+      Real data: WTI (CL) and Brent (BZ) crude futures trades on CME, one session
+      (2026-05-15, from Databento market-by-order data). Their correlation measured at
+      5-minute sampling is ≈0.87 — but sample the same trades on a finer grid
+      (previous-tick) and the estimate collapses: the <em>Epps effect</em>. The second
+      toggle shows a simulated pair where the truth (ρ&nbsp;=&nbsp;0.80) is known
+      exactly. This is the failure mode our estimators are built to fix. Drag the slider.
     </p>
     <div class="card reveal" style="padding: 22px;">
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button id="eppsModeReal"
+          style="background:none; border:1px solid var(--border); color:var(--muted);
+                 border-radius:8px; padding:6px 14px; font-size:13.5px; cursor:pointer;">
+          WTI–Brent · real trades
+        </button>
+        <button id="eppsModeSim"
+          style="background:none; border:1px solid var(--border); color:var(--muted);
+                 border-radius:8px; padding:6px 14px; font-size:13.5px; cursor:pointer;">
+          Simulated · true ρ = 0.80
+        </button>
+      </div>
       <canvas id="epps" style="width:100%; height:330px; display:block;"></canvas>
       <div style="display:flex; align-items:center; gap:16px; margin-top:18px; flex-wrap:wrap;">
         <span style="font-size:13.5px; color:var(--muted); white-space:nowrap;">Sampling interval</span>
@@ -408,6 +422,28 @@
       <li class="reveal">
         <span class="title">More publications coming soon</span>
         <span class="venue">Working papers in preparation</span>
+      </li>
+    </ul>
+  </section>
+
+  <section id="notes">
+    <div class="kicker reveal">Notes</div>
+    <h2 class="reveal">Engineering post-mortems</h2>
+    <p class="lede reveal">
+      Bug write-ups from our own research pipelines. Every quant shop has these;
+      almost nobody publishes them. We think the discovery methods are worth more
+      than the embarrassment.
+    </p>
+    <ul class="pubs">
+      <li class="reveal">
+        <span class="title"><a href="/notes/phantom-size.html">Anatomy of a subtle backtest bug: the phantom size</a></span>
+        <span class="venue">How one ignored field in an order-book reconstruction corrupted every
+        size-based feature we had — while passing every check we thought to run.</span>
+      </li>
+      <li class="reveal">
+        <span class="title"><a href="/notes/lookahead-artifact.html">Anatomy of a look-ahead artifact: the backtest that was three-quarters imaginary</a></span>
+        <span class="venue">A +92 bps/week backtest that fell to an insignificant +23 once two leaks were
+        removed — and lost to the simple baseline it was supposed to beat.</span>
       </li>
     </ul>
   </section>
@@ -544,6 +580,7 @@
 })();
 </script>
 
+<script src="/epps-data.js"></script>
 <script>
 (function () {
   var canvas = document.getElementById('epps');
@@ -552,6 +589,39 @@
   var slider = document.getElementById('eppsH');
   var resim = document.getElementById('eppsResim');
   var stat = document.getElementById('eppsStat');
+  var btnReal = document.getElementById('eppsModeReal');
+  var btnSim = document.getElementById('eppsModeSim');
+
+  /* Real data: CL (WTI) and BZ (Brent) front-contract trades, CME Globex,
+     2026-05-15 13:00-20:00 UTC, from Databento MBO. Curve precomputed offline
+     with the same previous-tick estimator used in the simulation. Paths are
+     log prices sampled every 30s. */
+  var REAL = REAL_EPPS_DATA;
+
+  var mode = 'real';
+
+  function corrReal(h) {
+    var xs = REAL.hs, cs = REAL.corr, lh = Math.log(h);
+    if (h <= xs[0]) return cs[0];
+    for (var i = 1; i < xs.length; i++) {
+      if (h <= xs[i]) {
+        var t = (lh - Math.log(xs[i - 1])) / (Math.log(xs[i]) - Math.log(xs[i - 1]));
+        return cs[i - 1] + (cs[i] - cs[i - 1]) * t;
+      }
+    }
+    return cs[cs.length - 1];
+  }
+
+  function setMode(m) {
+    mode = m;
+    var on = function (b) { b.style.borderColor = 'var(--accent-dim)'; b.style.color = 'var(--text)'; };
+    var off = function (b) { b.style.borderColor = 'var(--border)'; b.style.color = 'var(--muted)'; };
+    if (m === 'real') { on(btnReal); off(btnSim); resim.style.display = 'none'; }
+    else { on(btnSim); off(btnReal); resim.style.display = ''; }
+    draw();
+  }
+  btnReal.addEventListener('click', function () { setMode('real'); });
+  btnSim.addEventListener('click', function () { setMode('sim'); });
 
   var T = 23400;            /* seconds in one trading session */
   var RHO = 0.8;            /* true correlation of the driving noise */
@@ -644,23 +714,38 @@
 
     /* --- price paths strip --- */
     var stripH = 80;
-    var series = [[path1, 'rgba(196,181,253,0.9)'], [path2, 'rgba(109,91,184,0.9)']];
+    var seriesData;
+    if (mode === 'real') {
+      seriesData = [[REAL.path1, 'rgba(196,181,253,0.9)'], [REAL.path2, 'rgba(109,91,184,0.9)']];
+    } else {
+      var a1 = [], a2 = [];
+      for (var ti = 0; ti <= T; ti += 20) { a1.push(path1[ti]); a2.push(path2[ti]); }
+      seriesData = [[a1, 'rgba(196,181,253,0.9)'], [a2, 'rgba(109,91,184,0.9)']];
+    }
     for (var s = 0; s < 2; s++) {
-      var p = series[s][0], mn = Infinity, mx = -Infinity;
-      for (var i = 0; i <= T; i += 20) { if (p[i] < mn) mn = p[i]; if (p[i] > mx) mx = p[i]; }
-      ctx.strokeStyle = series[s][1];
+      var p = seriesData[s][0], mn = Infinity, mx = -Infinity;
+      for (var i = 0; i < p.length; i++) {
+        if (p[i] == null) continue;
+        if (p[i] < mn) mn = p[i]; if (p[i] > mx) mx = p[i];
+      }
+      ctx.strokeStyle = seriesData[s][1];
       ctx.lineWidth = 1;
       ctx.beginPath();
-      for (var t = 0; t <= T; t += 20) {
-        var x = t / T * W;
-        var y = 8 + (1 - (p[t] - mn) / (mx - mn || 1)) * (stripH - 16);
-        t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      var started = false;
+      for (var k2 = 0; k2 < p.length; k2++) {
+        if (p[k2] == null) continue;
+        var x = k2 / (p.length - 1) * W;
+        var y = 8 + (1 - (p[k2] - mn) / (mx - mn || 1)) * (stripH - 16);
+        started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        started = true;
       }
       ctx.stroke();
     }
     ctx.fillStyle = 'rgba(139,139,150,0.8)';
     ctx.font = '11px ui-monospace, Menlo, monospace';
-    ctx.fillText('two correlated price paths, one trading day', 4, 12);
+    ctx.fillText(mode === 'real'
+      ? 'WTI (CL, light) vs Brent (BZ, dark) — CME trades, ' + REAL.date + ', 13:00–20:00 UTC'
+      : 'two simulated correlated price paths, one trading day', 4, 12);
 
     /* --- correlation vs sampling-interval plot --- */
     var px0 = 44, px1 = W - 12, py0 = stripH + 26, py1 = H - 24;
@@ -681,40 +766,54 @@
       ctx.fillText(fmtH(xticks[xt]), xx - 8, H - 8);
     }
 
-    /* true rho */
-    var yr = yOf(RHO);
+    /* reference line */
+    var refC = mode === 'real' ? REAL.refCorr : RHO;
+    var refLabel = mode === 'real'
+      ? '5-min corr ≈ ' + REAL.refCorr.toFixed(2)
+      : 'true ρ = 0.80';
+    var yr = yOf(refC);
     ctx.strokeStyle = 'rgba(196,181,253,0.5)';
     ctx.setLineDash([5, 5]);
     ctx.beginPath(); ctx.moveTo(px0, yr); ctx.lineTo(px1, yr); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(196,181,253,0.8)';
-    ctx.fillText('true ρ = 0.80', px1 - 90, yr - 6);
+    ctx.fillText(refLabel, px1 - 110, yr - 6);
 
     /* estimated curve */
+    var cH = mode === 'real' ? REAL.hs : curveH;
+    var cC = mode === 'real' ? REAL.corr : curveC;
     ctx.strokeStyle = '#a78bfa';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    for (var k = 0; k < curveH.length; k++) {
-      var cx = xOf(curveH[k], px0, px1), cy = yOf(curveC[k]);
-      k === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+    var cStarted = false;
+    for (var k = 0; k < cH.length; k++) {
+      if (cC[k] == null || isNaN(cC[k])) continue;
+      var cx = xOf(cH[k], px0, px1), cy = yOf(cC[k]);
+      cStarted ? ctx.lineTo(cx, cy) : ctx.moveTo(cx, cy);
+      cStarted = true;
     }
     ctx.stroke();
 
     /* current-h marker */
-    var h = sliderH(), ch = corrAt(h);
+    var h = sliderH();
+    var ch = mode === 'real' ? corrReal(h) : corrAt(h);
     var mx2 = xOf(h, px0, px1), my2 = yOf(ch);
     ctx.strokeStyle = 'rgba(167,139,250,0.35)';
     ctx.beginPath(); ctx.moveTo(mx2, py0); ctx.lineTo(mx2, py1); ctx.stroke();
     ctx.fillStyle = '#c4b5fd';
     ctx.beginPath(); ctx.arc(mx2, my2, 5, 0, Math.PI * 2); ctx.fill();
 
-    stat.textContent = 'sampling every ' + fmtH(h) +
-      '  →  ρ̂ = ' + (isNaN(ch) ? '—' : ch.toFixed(2)) +
-      '   (true ρ = 0.80 · asset 1 trades ~5s, asset 2 ~7s · previous-tick sampling)';
+    stat.textContent = mode === 'real'
+      ? 'sampling every ' + fmtH(h) + '  →  ρ̂ = ' + (ch == null || isNaN(ch) ? '—' : ch.toFixed(2)) +
+        '   (CL: ' + REAL.n1.toLocaleString() + ' trades, median gap ' + REAL.gap1 + 's · BZ: ' +
+        REAL.n2.toLocaleString() + ' trades, gap ' + REAL.gap2 + 's · previous-tick)'
+      : 'sampling every ' + fmtH(h) +
+        '  →  ρ̂ = ' + (isNaN(ch) ? '—' : ch.toFixed(2)) +
+        '   (true ρ = 0.80 · asset 1 trades ~5s, asset 2 ~7s · previous-tick sampling)';
   }
 
   simulate();
-  draw();
+  setMode('real');
   slider.addEventListener('input', draw);
   resim.addEventListener('click', function () { simulate(); draw(); });
   window.addEventListener('resize', draw);
