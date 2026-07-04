@@ -79,7 +79,7 @@
     0%, 100% { box-shadow: 0 0 0 rgba(167,139,250,0); }
     50% { box-shadow: 0 0 14px rgba(167,139,250,0.45); }
   }
-  .nav-inner ul { display: flex; gap: 26px; list-style: none; }
+  .nav-inner ul { display: flex; gap: 26px; list-style: none; flex-wrap: wrap; justify-content: flex-end; }
   .nav-inner ul a {
     color: var(--muted); font-size: 14px; letter-spacing: 0.02em;
     position: relative;
@@ -274,6 +274,7 @@
     <span class="brand"><span class="mark"></span>BLACK QUANTUM</span>
     <ul>
       <li><a href="#research">Research</a></li>
+      <li><a href="#demo">Demo</a></li>
       <li><a href="#approach">Approach</a></li>
       <li><a href="#publications">Publications</a></li>
       <li><a href="#news">News</a></li>
@@ -337,6 +338,34 @@
         research pipelines. We treat evaluation methodology as a research problem
         in its own right.</p>
       </div>
+    </div>
+  </section>
+
+  <section id="demo">
+    <div class="kicker reveal">Interactive</div>
+    <h2 class="reveal">The Epps effect, live</h2>
+    <p class="lede reveal">
+      Two simulated assets with true correlation 0.80, each trading at its own random
+      times. Sample both on a common grid (previous-tick) and estimate the correlation
+      of their returns: as the grid gets finer, the estimate collapses toward zero —
+      the <em>Epps effect</em>. This is the failure mode our estimators are built to
+      fix. Drag the slider.
+    </p>
+    <div class="card reveal" style="padding: 22px;">
+      <canvas id="epps" style="width:100%; height:330px; display:block;"></canvas>
+      <div style="display:flex; align-items:center; gap:16px; margin-top:18px; flex-wrap:wrap;">
+        <span style="font-size:13.5px; color:var(--muted); white-space:nowrap;">Sampling interval</span>
+        <input type="range" id="eppsH" min="0" max="1" step="0.001" value="0.35"
+               style="flex:1; min-width:180px; accent-color:var(--accent);"
+               aria-label="Sampling interval">
+        <button id="eppsResim"
+          style="background:none; border:1px solid var(--border); color:var(--text);
+                 border-radius:8px; padding:8px 16px; font-size:14px; cursor:pointer;">
+          Resimulate
+        </button>
+      </div>
+      <p id="eppsStat" style="margin-top:14px; font-family:ui-monospace,'SF Mono',Menlo,monospace;
+         font-size:13.5px; color:var(--muted);"></p>
     </div>
   </section>
 
@@ -512,6 +541,186 @@
   resize();
   window.addEventListener('resize', resize);
   requestAnimationFrame(step);
+})();
+</script>
+
+<script>
+(function () {
+  var canvas = document.getElementById('epps');
+  if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  var slider = document.getElementById('eppsH');
+  var resim = document.getElementById('eppsResim');
+  var stat = document.getElementById('eppsStat');
+
+  var T = 23400;            /* seconds in one trading session */
+  var RHO = 0.8;            /* true correlation of the driving noise */
+  var H_MIN = 2, H_MAX = 300;
+  var path1, path2, obs1, obs2, curveH = [], curveC = [];
+
+  function randn() {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function observe(meanGap) {
+    var ts = [0], t = 0;
+    for (;;) {
+      t += -Math.log(Math.random()) * meanGap;
+      if (t >= T) break;
+      ts.push(Math.floor(t));
+    }
+    return ts;
+  }
+
+  function simulate() {
+    path1 = new Float64Array(T + 1);
+    path2 = new Float64Array(T + 1);
+    for (var i = 0; i < T; i++) {
+      var z1 = randn(), z2 = RHO * z1 + Math.sqrt(1 - RHO * RHO) * randn();
+      path1[i + 1] = path1[i] + z1;
+      path2[i + 1] = path2[i] + z2;
+    }
+    obs1 = observe(5);   /* asset 1 trades every ~5s */
+    obs2 = observe(7);   /* asset 2 trades every ~7s */
+    curveH = []; curveC = [];
+    for (var k = 0; k < 40; k++) {
+      var h = Math.exp(Math.log(H_MIN) + (k / 39) * (Math.log(H_MAX) - Math.log(H_MIN)));
+      curveH.push(h);
+      curveC.push(corrAt(h));
+    }
+  }
+
+  function prevTick(obs, path, h) {
+    var out = [], j = 0;
+    for (var t = 0; t <= T; t += h) {
+      while (j + 1 < obs.length && obs[j + 1] <= t) j++;
+      out.push(path[obs[j]]);
+    }
+    return out;
+  }
+
+  function corrAt(h) {
+    var s1 = prevTick(obs1, path1, h), s2 = prevTick(obs2, path2, h);
+    var n = s1.length - 1;
+    if (n < 3) return NaN;
+    var m1 = 0, m2 = 0, r1 = [], r2 = [];
+    for (var k = 1; k <= n; k++) {
+      var a = s1[k] - s1[k - 1], b = s2[k] - s2[k - 1];
+      r1.push(a); r2.push(b); m1 += a; m2 += b;
+    }
+    m1 /= n; m2 /= n;
+    var c = 0, v1 = 0, v2 = 0;
+    for (var q = 0; q < n; q++) {
+      c += (r1[q] - m1) * (r2[q] - m2);
+      v1 += (r1[q] - m1) * (r1[q] - m1);
+      v2 += (r2[q] - m2) * (r2[q] - m2);
+    }
+    return c / Math.sqrt(v1 * v2);
+  }
+
+  function sliderH() {
+    var v = parseFloat(slider.value);
+    return Math.exp(Math.log(H_MIN) + v * (Math.log(H_MAX) - Math.log(H_MIN)));
+  }
+
+  function xOf(h, x0, x1) {
+    return x0 + (Math.log(h) - Math.log(H_MIN)) / (Math.log(H_MAX) - Math.log(H_MIN)) * (x1 - x0);
+  }
+
+  function fmtH(h) {
+    return h < 60 ? Math.round(h) + 's' : (h / 60).toFixed(1).replace(/\.0$/, '') + 'm';
+  }
+
+  function draw() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = canvas.clientWidth, H = canvas.clientHeight;
+    if (W < 10 || H < 10) return;   /* not laid out yet — ResizeObserver will call back */
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    /* --- price paths strip --- */
+    var stripH = 80;
+    var series = [[path1, 'rgba(196,181,253,0.9)'], [path2, 'rgba(109,91,184,0.9)']];
+    for (var s = 0; s < 2; s++) {
+      var p = series[s][0], mn = Infinity, mx = -Infinity;
+      for (var i = 0; i <= T; i += 20) { if (p[i] < mn) mn = p[i]; if (p[i] > mx) mx = p[i]; }
+      ctx.strokeStyle = series[s][1];
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (var t = 0; t <= T; t += 20) {
+        var x = t / T * W;
+        var y = 8 + (1 - (p[t] - mn) / (mx - mn || 1)) * (stripH - 16);
+        t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(139,139,150,0.8)';
+    ctx.font = '11px ui-monospace, Menlo, monospace';
+    ctx.fillText('two correlated price paths, one trading day', 4, 12);
+
+    /* --- correlation vs sampling-interval plot --- */
+    var px0 = 44, px1 = W - 12, py0 = stripH + 26, py1 = H - 24;
+    var yOf = function (c) { return py1 - (c + 0.1) / 1.1 * (py1 - py0); };
+
+    ctx.strokeStyle = 'rgba(30,30,38,1)';
+    ctx.lineWidth = 1;
+    var yticks = [0, 0.4, 0.8];
+    ctx.fillStyle = 'rgba(139,139,150,0.8)';
+    for (var yt = 0; yt < yticks.length; yt++) {
+      var yy = yOf(yticks[yt]);
+      ctx.beginPath(); ctx.moveTo(px0, yy); ctx.lineTo(px1, yy); ctx.stroke();
+      ctx.fillText(yticks[yt].toFixed(1), 16, yy + 4);
+    }
+    var xticks = [2, 5, 15, 60, 300];
+    for (var xt = 0; xt < xticks.length; xt++) {
+      var xx = xOf(xticks[xt], px0, px1);
+      ctx.fillText(fmtH(xticks[xt]), xx - 8, H - 8);
+    }
+
+    /* true rho */
+    var yr = yOf(RHO);
+    ctx.strokeStyle = 'rgba(196,181,253,0.5)';
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(px0, yr); ctx.lineTo(px1, yr); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(196,181,253,0.8)';
+    ctx.fillText('true ρ = 0.80', px1 - 90, yr - 6);
+
+    /* estimated curve */
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var k = 0; k < curveH.length; k++) {
+      var cx = xOf(curveH[k], px0, px1), cy = yOf(curveC[k]);
+      k === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+
+    /* current-h marker */
+    var h = sliderH(), ch = corrAt(h);
+    var mx2 = xOf(h, px0, px1), my2 = yOf(ch);
+    ctx.strokeStyle = 'rgba(167,139,250,0.35)';
+    ctx.beginPath(); ctx.moveTo(mx2, py0); ctx.lineTo(mx2, py1); ctx.stroke();
+    ctx.fillStyle = '#c4b5fd';
+    ctx.beginPath(); ctx.arc(mx2, my2, 5, 0, Math.PI * 2); ctx.fill();
+
+    stat.textContent = 'sampling every ' + fmtH(h) +
+      '  →  ρ̂ = ' + (isNaN(ch) ? '—' : ch.toFixed(2)) +
+      '   (true ρ = 0.80 · asset 1 trades ~5s, asset 2 ~7s · previous-tick sampling)';
+  }
+
+  simulate();
+  draw();
+  slider.addEventListener('input', draw);
+  resim.addEventListener('click', function () { simulate(); draw(); });
+  window.addEventListener('resize', draw);
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(draw).observe(canvas);
+  }
 })();
 </script>
 
