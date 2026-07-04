@@ -211,6 +211,7 @@
   .grid.reveal-group.in .card:nth-child(4) { transition-delay: 0.24s; }
   .grid.reveal-group.in .card:nth-child(5) { transition-delay: 0.32s; }
   .grid.reveal-group.in .card:nth-child(6) { transition-delay: 0.40s; }
+  .grid.reveal-group.in .card:nth-child(7) { transition-delay: 0.48s; }
 
   /* ---------- domains ---------- */
   .thesis {
@@ -417,6 +418,13 @@
         <div class="fails"><b>Today:</b> ad-hoc pseudotime binning — asynchrony plus an unobserved clock.</div>
       </div>
       <div class="card domain">
+        <span class="field">Distributed systems</span>
+        <h3>Networked clocks</h3>
+        <p>Packets are timestamped, but every machine keeps its own drifting clock. Here
+        the twist inverts: the clock relationship itself is the unknown you must estimate.</p>
+        <div class="fails"><b>Today:</b> NTP breaks on asymmetric paths — the shared clock is provably unrecoverable.</div>
+      </div>
+      <div class="card domain">
         <span class="field">Finance</span>
         <h3>Where it was solved</h3>
         <p>High-frequency covariance under asynchronous ticks — the problem where the
@@ -425,9 +433,10 @@
       </div>
     </div>
     <p class="lede reveal" style="margin-top:36px; margin-bottom:0;">
-      Two of these break new ground even for the finance toolkit: <strong>uncertain
-      observation times</strong> (climate) and a <strong>latent, reconstructed clock</strong>
-      (single-cell). Those aren't ports — they're open problems. That's where we want to work.
+      Some of these break new ground even for the finance toolkit: <strong>uncertain
+      observation times</strong> (climate, networked clocks) and a <strong>latent, reconstructed
+      clock</strong> (single-cell). Those aren't ports — they're open problems. That's where
+      we want to work.
     </p>
   </section>
 
