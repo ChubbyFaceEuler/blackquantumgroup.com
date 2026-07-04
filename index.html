@@ -206,9 +206,31 @@
                 border-color 0.25s ease, box-shadow 0.25s ease;
   }
   .grid.reveal-group.in .card:nth-child(1) { transition-delay: 0.00s; }
-  .grid.reveal-group.in .card:nth-child(2) { transition-delay: 0.10s; }
-  .grid.reveal-group.in .card:nth-child(3) { transition-delay: 0.20s; }
-  .grid.reveal-group.in .card:nth-child(4) { transition-delay: 0.30s; }
+  .grid.reveal-group.in .card:nth-child(2) { transition-delay: 0.08s; }
+  .grid.reveal-group.in .card:nth-child(3) { transition-delay: 0.16s; }
+  .grid.reveal-group.in .card:nth-child(4) { transition-delay: 0.24s; }
+  .grid.reveal-group.in .card:nth-child(5) { transition-delay: 0.32s; }
+  .grid.reveal-group.in .card:nth-child(6) { transition-delay: 0.40s; }
+
+  /* ---------- domains ---------- */
+  .thesis {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 40px;
+  }
+  .thesis p { margin: 0; color: var(--text); font-size: 1.06rem; }
+  .thesis p .hl { color: var(--accent); font-weight: 600; }
+  .domain .field {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--accent-dim); font-weight: 600; margin-bottom: 10px; display: block;
+  }
+  .domain .fails {
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 13.5px; color: var(--muted);
+  }
+  .domain .fails b { color: #c4b5fd; font-weight: 600; }
 
   /* ---------- principles ---------- */
   .principles { display: grid; gap: 0; }
@@ -274,6 +296,7 @@
     <span class="brand"><span class="mark"></span>BLACK QUANTUM</span>
     <ul>
       <li><a href="#research">Research</a></li>
+      <li><a href="#domains">Domains</a></li>
       <li><a href="#demo">Demo</a></li>
       <li><a href="#approach">Approach</a></li>
       <li><a href="#publications">Publications</a></li>
@@ -339,6 +362,73 @@
         in its own right.</p>
       </div>
     </div>
+  </section>
+
+  <section id="domains">
+    <div class="kicker reveal">Why it matters</div>
+    <h2 class="reveal">The same problem, across science</h2>
+    <div class="thesis reveal">
+      <p>
+        Almost everything we measure is observed <span class="hl">asynchronously</span> —
+        two processes, each recorded at its own irregular times. Ask how they move
+        together and the standard fix is to force both onto a shared clock:
+        interpolate, bin, resample. That single step injects bias — correlations
+        collapse toward zero as sampling tightens (the <em>Epps effect</em>). Finance
+        built rigorous estimators that work <span class="hl">natively on asynchronous
+        data</span>, with no synchronization. That machinery has barely left finance.
+        The same structure — and the same broken workarounds — sit at the foundation
+        of field after field.
+      </p>
+    </div>
+    <div class="grid reveal-group">
+      <div class="card domain">
+        <span class="field">Climate science</span>
+        <h3>Proxy records</h3>
+        <p>Ice cores, sediments, and tree rings are sampled at irregular depths — and
+        even the timestamps are uncertain. Correlating two proxies is a known minefield.</p>
+        <div class="fails"><b>Today:</b> interpolate onto shared age models; bias compounds with dating error.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Astronomy</span>
+        <h3>Light curves</h3>
+        <p>Reverberation mapping and multiwavelength time-lags need the covariance of two
+        unevenly sampled light curves from telescopes that observe when they can.</p>
+        <div class="fails"><b>Today:</b> interpolated cross-correlation functions — the exact bias, renamed.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Clinical medicine</span>
+        <h3>Health records</h3>
+        <p>Labs are drawn sporadically, vitals frequently. The coupling between them
+        carries clinical signal — but the sampling is fully asynchronous.</p>
+        <div class="fails"><b>Today:</b> impute-then-model — papering over the statistics with deep nets.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Digital health</span>
+        <h3>Wearables</h3>
+        <p>Glucose every five minutes, heart rate every second, motion at 50&nbsp;Hz. The
+        cross-signal coupling is the product — and it's measured off-clock.</p>
+        <div class="fails"><b>Today:</b> resample-and-correlate; "weak, not significant" may be an artifact.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Genomics</span>
+        <h3>Single-cell dynamics</h3>
+        <p>Sequencing destroys the cell, so no cell is seen twice and time itself is
+        reconstructed. Gene–gene dynamics live on a latent, asynchronous clock.</p>
+        <div class="fails"><b>Today:</b> ad-hoc pseudotime binning — asynchrony plus an unobserved clock.</div>
+      </div>
+      <div class="card domain">
+        <span class="field">Finance</span>
+        <h3>Where it was solved</h3>
+        <p>High-frequency covariance under asynchronous ticks — the problem where the
+        rigorous estimators were first built, and our home ground.</p>
+        <div class="fails"><b>Today:</b> solved rigorously — and, so far, stranded in this one field.</div>
+      </div>
+    </div>
+    <p class="lede reveal" style="margin-top:36px; margin-bottom:0;">
+      Two of these break new ground even for the finance toolkit: <strong>uncertain
+      observation times</strong> (climate) and a <strong>latent, reconstructed clock</strong>
+      (single-cell). Those aren't ports — they're open problems. That's where we want to work.
+    </p>
   </section>
 
   <section id="demo">
