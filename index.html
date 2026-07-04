@@ -26,10 +26,27 @@
     line-height: 1.65;
     font-size: 17px;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   ::selection { background: var(--accent-dim); color: #fff; }
+
+  /* ---------- particle canvas ---------- */
+  #field {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .hero-wrap {
+    position: relative;
+  }
+  .hero-wrap::after {
+    content: "";
+    position: absolute; left: 0; right: 0; bottom: 0; height: 140px;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+    pointer-events: none;
+  }
 
   /* ---------- nav ---------- */
   nav {
@@ -56,32 +73,50 @@
       radial-gradient(circle at 72% 72%, var(--accent-dim) 0%, transparent 60%),
       #000;
     border: 1px solid var(--border);
+    animation: markPulse 5s ease-in-out infinite;
+  }
+  @keyframes markPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(167,139,250,0); }
+    50% { box-shadow: 0 0 14px rgba(167,139,250,0.45); }
   }
   .nav-inner ul { display: flex; gap: 26px; list-style: none; }
-  .nav-inner ul a { color: var(--muted); font-size: 14px; letter-spacing: 0.02em; }
+  .nav-inner ul a {
+    color: var(--muted); font-size: 14px; letter-spacing: 0.02em;
+    position: relative;
+  }
+  .nav-inner ul a::after {
+    content: ""; position: absolute; left: 0; bottom: -4px;
+    width: 0; height: 1px; background: var(--accent);
+    transition: width 0.25s ease;
+  }
   .nav-inner ul a:hover { color: var(--text); text-decoration: none; }
+  .nav-inner ul a:hover::after { width: 100%; }
 
   main { max-width: var(--max); margin: 0 auto; padding: 0 28px; }
 
   /* ---------- hero ---------- */
   header.hero {
-    padding: 140px 0 110px;
+    padding: 150px 0 120px;
     position: relative;
-  }
-  .hero::before {
-    content: "";
-    position: absolute; inset: -40px -200px 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 70% 10%, rgba(167,139,250,0.10), transparent 70%),
-      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(109,91,184,0.08), transparent 70%);
-    pointer-events: none;
   }
   .hero h1 {
     font-size: clamp(2.4rem, 6vw, 4rem);
     font-weight: 700; letter-spacing: -0.03em; line-height: 1.12;
     max-width: 18ch;
   }
-  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--accent), #c4b5fd, var(--accent-dim), var(--accent));
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 7s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
   .hero p.sub {
     color: var(--muted); margin-top: 26px; font-size: 1.18rem;
     max-width: 56ch;
@@ -90,11 +125,39 @@
   .btn {
     display: inline-block; padding: 11px 24px; border-radius: 8px;
     font-size: 15px; font-weight: 550; letter-spacing: 0.01em;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
   }
   .btn.primary { background: var(--text); color: #000; }
-  .btn.primary:hover { background: #fff; text-decoration: none; }
+  .btn.primary:hover {
+    background: #fff; text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(167,139,250,0.25);
+  }
   .btn.ghost { border: 1px solid var(--border); color: var(--text); }
-  .btn.ghost:hover { border-color: var(--accent-dim); text-decoration: none; }
+  .btn.ghost:hover {
+    border-color: var(--accent-dim); text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(167,139,250,0.12);
+  }
+
+  /* hero entrance */
+  .hero h1, .hero p.sub, .hero .cta-row {
+    opacity: 0; transform: translateY(18px);
+    animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .hero p.sub { animation-delay: 0.15s; }
+  .hero .cta-row { animation-delay: 0.3s; }
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- scroll reveal ---------- */
+  .reveal {
+    opacity: 0; transform: translateY(26px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
 
   /* ---------- sections ---------- */
   section { padding: 84px 0; border-top: 1px solid var(--border); }
@@ -117,22 +180,44 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 26px;
-    transition: border-color 0.2s ease;
+    position: relative;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  .card:hover { border-color: #2e2e3c; }
+  .card:hover {
+    border-color: #33334a;
+    transform: translateY(-4px);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.5), 0 0 24px rgba(167,139,250,0.07);
+  }
   .card .num {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
     color: var(--accent-dim); font-size: 13px; margin-bottom: 14px; display: block;
+    transition: color 0.25s ease;
   }
+  .card:hover .num { color: var(--accent); }
   .card h3 { font-size: 1.12rem; font-weight: 620; margin-bottom: 10px; letter-spacing: -0.01em; }
   .card p { color: var(--muted); font-size: 15px; line-height: 1.6; }
+
+  /* stagger children */
+  .grid .card:nth-child(1) { transition-delay: 0s; }
+  .grid.reveal-group .card { opacity: 0; transform: translateY(26px); }
+  .grid.reveal-group.in .card {
+    opacity: 1; transform: translateY(0);
+    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1),
+                border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .grid.reveal-group.in .card:nth-child(1) { transition-delay: 0.00s; }
+  .grid.reveal-group.in .card:nth-child(2) { transition-delay: 0.10s; }
+  .grid.reveal-group.in .card:nth-child(3) { transition-delay: 0.20s; }
+  .grid.reveal-group.in .card:nth-child(4) { transition-delay: 0.30s; }
 
   /* ---------- principles ---------- */
   .principles { display: grid; gap: 0; }
   .principle {
     display: grid; grid-template-columns: 200px 1fr; gap: 24px;
     padding: 26px 0; border-bottom: 1px solid var(--border);
+    transition: padding-left 0.25s ease;
   }
+  .principle:hover { padding-left: 10px; }
   .principle:last-child { border-bottom: none; }
   .principle h3 { font-size: 1.02rem; font-weight: 620; }
   .principle p { color: var(--muted); font-size: 15.5px; }
@@ -142,7 +227,9 @@
   ul.pubs li {
     padding: 22px 0; border-bottom: 1px solid var(--border);
     display: flex; flex-direction: column; gap: 4px;
+    transition: padding-left 0.25s ease;
   }
+  ul.pubs li:hover { padding-left: 10px; }
   ul.pubs li:last-child { border-bottom: none; }
   ul.pubs .title { font-weight: 600; font-size: 1.05rem; }
   ul.pubs .venue { color: var(--muted); font-size: 14.5px; }
@@ -152,8 +239,13 @@
   .contact-links a {
     border: 1px solid var(--border); border-radius: 8px;
     padding: 10px 20px; font-size: 15px; color: var(--text);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .contact-links a:hover { border-color: var(--accent-dim); text-decoration: none; }
+  .contact-links a:hover {
+    border-color: var(--accent-dim); text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(167,139,250,0.12);
+  }
 
   footer {
     border-top: 1px solid var(--border);
@@ -162,10 +254,16 @@
   }
 
   @media (max-width: 640px) {
-    header.hero { padding: 90px 0 70px; }
+    header.hero { padding: 100px 0 80px; }
     section { padding: 60px 0; }
     .principle { grid-template-columns: 1fr; gap: 8px; }
     .nav-inner ul { gap: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .reveal, .grid.reveal-group .card, .hero h1, .hero p.sub, .hero .cta-row { opacity: 1 !important; transform: none !important; }
+    #field { display: none; }
   }
 </style>
 </head>
@@ -183,29 +281,34 @@
   </div>
 </nav>
 
-<main>
-  <header class="hero">
-    <h1>Statistics and machine learning, <em>taken seriously</em>.</h1>
-    <p class="sub">
-      Black Quantum is an independent research lab working at the intersection of
-      statistical theory, machine learning, and financial markets — from asymptotic
-      proofs to production systems.
-    </p>
-    <div class="cta-row">
-      <a class="btn primary" href="#research">Our research</a>
-      <a class="btn ghost" href="#contact">Get in touch</a>
-    </div>
-  </header>
+<div class="hero-wrap">
+  <canvas id="field"></canvas>
+  <main style="max-width: var(--max); margin: 0 auto; padding: 0 28px;">
+    <header class="hero">
+      <h1>Statistics and machine learning, <em>taken seriously</em>.</h1>
+      <p class="sub">
+        Black Quantum is an independent research lab working at the intersection of
+        statistical theory, machine learning, and financial markets — from asymptotic
+        proofs to production systems.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="#research">Our research</a>
+        <a class="btn ghost" href="#contact">Get in touch</a>
+      </div>
+    </header>
+  </main>
+</div>
 
+<main>
   <section id="research">
-    <div class="kicker">Research</div>
-    <h2>What we work on</h2>
-    <p class="lede">
+    <div class="kicker reveal">Research</div>
+    <h2 class="reveal">What we work on</h2>
+    <p class="lede reveal">
       Our core programme is inference for high-frequency, asynchronously observed
       data — a problem where classical statistics breaks down and careful theory
       pays off in live systems.
     </p>
-    <div class="grid">
+    <div class="grid reveal-group">
       <div class="card">
         <span class="num">01</span>
         <h3>High-frequency covariance estimation</h3>
@@ -237,25 +340,25 @@
   </section>
 
   <section id="approach">
-    <div class="kicker">Approach</div>
-    <h2>How we do research</h2>
+    <div class="kicker reveal">Approach</div>
+    <h2 class="reveal">How we do research</h2>
     <div class="principles">
-      <div class="principle">
+      <div class="principle reveal">
         <h3>Theory first</h3>
         <p>Estimators come with proofs, not just backtests. If we can't state the
         assumptions, we don't trust the result.</p>
       </div>
-      <div class="principle">
+      <div class="principle reveal">
         <h3>Adversarial evaluation</h3>
         <p>Every positive result is treated as a bug until it survives walk-forward
         testing, leakage audits, and independent replication.</p>
       </div>
-      <div class="principle">
+      <div class="principle reveal">
         <h3>Theory to deployment</h3>
         <p>Research isn't finished at the paper. We carry methods through
         simulation, real data, and production infrastructure.</p>
       </div>
-      <div class="principle">
+      <div class="principle reveal">
         <h3>Formal verification</h3>
         <p>Where the mathematics matters most, we machine-check it — bringing
         proof assistants into quantitative finance.</p>
@@ -264,14 +367,14 @@
   </section>
 
   <section id="publications">
-    <div class="kicker">Publications</div>
-    <h2>Selected work</h2>
+    <div class="kicker reveal">Publications</div>
+    <h2 class="reveal">Selected work</h2>
     <ul class="pubs">
-      <li>
+      <li class="reveal">
         <span class="title">Covariance estimation for asynchronously observed high-frequency data</span>
         <span class="venue">DPhil Thesis, University of Oxford, 2016</span>
       </li>
-      <li>
+      <li class="reveal">
         <span class="title">More publications coming soon</span>
         <span class="venue">Working papers in preparation</span>
       </li>
@@ -279,14 +382,14 @@
   </section>
 
   <section id="contact">
-    <div class="kicker">Contact</div>
-    <h2>Work with us</h2>
-    <p class="lede">
+    <div class="kicker reveal">Contact</div>
+    <h2 class="reveal">Work with us</h2>
+    <p class="lede reveal">
       We're interested in collaborations, consulting on high-frequency statistics
       and ML systems, and conversations with people who care about getting the
       details right.
     </p>
-    <div class="contact-links">
+    <div class="contact-links reveal">
       <a href="mailto:yang.azzollini@blackquantumgroup.com">Email us</a>
       <a href="#" title="Add GitHub URL">GitHub</a>
       <a href="#" title="Add LinkedIn URL">LinkedIn</a>
@@ -297,6 +400,104 @@
 <footer>
   &copy; 2026 Black Quantum. All rights reserved.
 </footer>
+
+<script>
+(function () {
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- scroll reveal ---- */
+  var revealEls = document.querySelectorAll('.reveal, .reveal-group');
+  if (reduced) {
+    revealEls.forEach(function (el) { el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ---- particle network in hero ---- */
+  if (reduced) return;
+  var canvas = document.getElementById('field');
+  var ctx = canvas.getContext('2d');
+  var wrap = canvas.parentElement;
+  var W, H, dpr, nodes = [];
+  var mouse = { x: -9999, y: -9999 };
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = wrap.clientWidth; H = wrap.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var target = Math.min(90, Math.floor(W * H / 16000));
+    while (nodes.length < target) nodes.push(makeNode());
+    nodes.length = target;
+  }
+
+  function makeNode() {
+    return {
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.35,
+      vy: (Math.random() - 0.5) * 0.35,
+      r: 1 + Math.random() * 1.6
+    };
+  }
+
+  wrap.addEventListener('mousemove', function (e) {
+    var b = wrap.getBoundingClientRect();
+    mouse.x = e.clientX - b.left; mouse.y = e.clientY - b.top;
+  });
+  wrap.addEventListener('mouseleave', function () { mouse.x = -9999; mouse.y = -9999; });
+
+  var LINK = 130;
+  function step() {
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < -10) n.x = W + 10; else if (n.x > W + 10) n.x = -10;
+      if (n.y < -10) n.y = H + 10; else if (n.y > H + 10) n.y = -10;
+
+      /* gentle attraction toward mouse */
+      var mdx = mouse.x - n.x, mdy = mouse.y - n.y;
+      var md2 = mdx * mdx + mdy * mdy;
+      if (md2 < 40000 && md2 > 1) {
+        n.x += mdx * 0.002; n.y += mdy * 0.002;
+      }
+    }
+    ctx.lineWidth = 1;
+    for (var a = 0; a < nodes.length; a++) {
+      for (var b = a + 1; b < nodes.length; b++) {
+        var dx = nodes[a].x - nodes[b].x, dy = nodes[a].y - nodes[b].y;
+        var d2 = dx * dx + dy * dy;
+        if (d2 < LINK * LINK) {
+          var t = 1 - Math.sqrt(d2) / LINK;
+          ctx.strokeStyle = 'rgba(167,139,250,' + (0.16 * t).toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.moveTo(nodes[a].x, nodes[a].y);
+          ctx.lineTo(nodes[b].x, nodes[b].y);
+          ctx.stroke();
+        }
+      }
+    }
+    for (var j = 0; j < nodes.length; j++) {
+      var p = nodes[j];
+      ctx.fillStyle = 'rgba(196,181,253,0.55)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(step);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  requestAnimationFrame(step);
+})();
+</script>
 
 </body>
 </html>
