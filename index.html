@@ -395,14 +395,14 @@
         <h3>Light curves</h3>
         <p>Reverberation mapping and multiwavelength time-lags need the covariance of two
         unevenly sampled light curves from telescopes that observe when they can.</p>
-        <div class="fails"><b>Today:</b> interpolated cross-correlation functions — the exact bias, renamed.</div>
+        <div class="fails"><b>Today:</b> interpolated cross-correlation functions, which reintroduce the same bias.</div>
       </div>
       <div class="card domain">
         <span class="field">Clinical medicine</span>
         <h3>Health records</h3>
         <p>Labs are drawn sporadically, vitals frequently. The coupling between them
         carries clinical signal — but the sampling is fully asynchronous.</p>
-        <div class="fails"><b>Today:</b> impute-then-model — papering over the statistics with deep nets.</div>
+        <div class="fails"><b>Today:</b> impute-then-model, which sidesteps the dependence structure rather than estimating it.</div>
       </div>
       <div class="card domain">
         <span class="field">Digital health</span>
@@ -443,8 +443,8 @@
     <p class="lede reveal" style="margin-top:36px; margin-bottom:0;">
       Some of these break new ground even for the finance toolkit: <strong>uncertain
       observation times</strong> (climate, networked clocks) and a <strong>latent, reconstructed
-      clock</strong> (single-cell). Those aren't ports — they're open problems. That's where
-      we want to work.
+      clock</strong> (single-cell). These are not ports of an existing method — they are open
+      problems, and the focus of our work.
     </p>
   </section>
 
