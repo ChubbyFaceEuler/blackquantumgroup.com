@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Our story — Black Quantum</title>
+<meta name="description" content="How Black Quantum came to be: a problem documented in 1979, a doctorate at Oxford, a decade of live trading systems, and a return to research.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="site" id="topnav">
+  <div class="bar">
+    <a class="logo" href="/"><span class="dot"></span>Black Quantum</a>
+    <ul>
+      <li><a href="/#problems">Problems</a></li>
+      <li><a href="/#domains">Why it matters</a></li>
+      <li><a href="/#approach">Approach</a></li>
+      <li><a href="/story.html">Our story</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-hero">
+  <div class="wrap">
+    <div class="crumb"><a href="/">Black Quantum</a> / Our story</div>
+    <h1>A problem worth a career</h1>
+    <p class="sub">
+      Black Quantum exists because of one stubborn chart: measure the correlation of two
+      markets more and more finely, and it quietly disappears. This is the story of
+      following that chart from a puzzle in the literature, through an Oxford doctorate,
+      through years of live trading systems, to a research lab.
+    </p>
+  </div>
+</header>
+
+<main>
+  <section class="block" style="padding-top:72px;">
+    <div class="wrap">
+      <div class="timeline">
+
+        <div class="era">
+          <div class="when">1979</div>
+          <h2>The problem gets a name</h2>
+          <p class="first">
+            Thomas Epps, studying stock data, documents something strange: correlations
+            between related stocks shrink as the measurement interval shrinks. The finer
+            you look, the less the market seems to hang together. For decades the effect
+            is treated as a nuisance to be worked around, usually by sampling coarsely
+            and quietly throwing most of the data away. The cause sits in plain sight.
+            No two assets trade at the same instants, and every method of forcing them
+            onto a shared clock injects bias of its own.
+          </p>
+          <div class="vignette">
+            <svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A correlation estimate collapsing as sampling tightens">
+              <line x1="30" y1="100" x2="500" y2="100" stroke="#dadce0" stroke-width="1.5"/>
+              <line x1="30" y1="100" x2="30" y2="14" stroke="#dadce0" stroke-width="1.5"/>
+              <path d="M40,88 C120,80 180,58 260,40 C340,26 420,20 490,18" fill="none" stroke="#0b57d0" stroke-width="2.5"/>
+              <line x1="30" y1="18" x2="500" y2="18" stroke="#bdc1c6" stroke-width="1.5" stroke-dasharray="5 5"/>
+              <text x="36" y="112" font-size="11" fill="#9aa0a6" font-family="ui-monospace, Menlo, monospace">finer sampling ←</text>
+              <text x="392" y="112" font-size="11" fill="#9aa0a6" font-family="ui-monospace, Menlo, monospace">→ coarser</text>
+              <text x="330" y="38" font-size="11" fill="#5f6368" font-family="ui-monospace, Menlo, monospace">measured correlation</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="era">
+          <div class="when">The early 2010s · Oxford</div>
+          <h2>Take the clocks seriously</h2>
+          <p class="first">
+            At the University of Oxford, supervised by Peter Clifford and Brian Ripley,
+            Yang Azzollini takes the problem on directly. The doctorate asks a plain
+            question: what happens if you stop fighting the observation times and
+            condition on them instead, the way regression conditions on its design?
+            The answer is unusually clean. For a whole class of estimators built on the
+            raw asynchronous clocks, variances that the literature knew only in the
+            limit become exact formulas, valid at any sample size, on any given day.
+          </p>
+          <p>
+            The thesis, <a href="https://ora.ox.ac.uk/objects/uuid:e0279f41-c83f-4514-bb69-f49bb4159822">Correlation
+            methods in the statistical analysis of financial trading data</a>, was
+            submitted in 2016. The idea at its centre never let go.
+          </p>
+        </div>
+
+        <div class="era">
+          <div class="when">2016 – 2026 · Industry</div>
+          <h2>The estimators meet real order books</h2>
+          <p class="first">
+            Then a decade on the other side: production trading systems, real
+            order-by-order data, live capital. Industry is a harsh referee. A method
+            that merely looks good in a paper does not survive contact with a matching
+            engine, and the years taught a discipline that now defines the lab: a
+            backtest is a claim, not a fact. Positive results are treated as bugs until
+            they survive walk-forward testing, leakage audits, and replication, because
+            most of them do not.
+          </p>
+          <p>
+            The same years confirmed the doctorate's premise from the practical side.
+            The engineers' fixes, resample, interpolate, carry forward, are exactly the
+            operations that corrupt the statistics. The theory and the practice point
+            at the same culprit: the artificial shared clock.
+          </p>
+        </div>
+
+        <div class="era">
+          <div class="when">2026</div>
+          <h2>Black Quantum</h2>
+          <p class="first">
+            Black Quantum is the return to research, carrying the industry discipline
+            back into statistics. The founding idea now has a name, the observed-clock
+            principle: condition on the observation times you actually saw, and
+            inference on how two processes move together becomes exact rather than
+            asymptotic. The lab runs it as a programme. State each problem on real
+            data, one page and one figure at a time. Prove what can be proved, and
+            machine-check the proofs that matter most. Carry every method through to
+            something that runs live.
+          </p>
+          <div class="vignette">
+            <svg viewBox="0 0 520 110" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two irregular clocks and their overlap structure">
+              <g>
+                <rect x="60"  y="34" width="34" height="42" fill="#1a73e8" fill-opacity="0.10"/>
+                <rect x="150" y="34" width="22" height="42" fill="#1a73e8" fill-opacity="0.10"/>
+                <rect x="220" y="34" width="46" height="42" fill="#1a73e8" fill-opacity="0.10"/>
+                <rect x="330" y="34" width="30" height="42" fill="#1a73e8" fill-opacity="0.10"/>
+                <rect x="410" y="34" width="52" height="42" fill="#1a73e8" fill-opacity="0.10"/>
+              </g>
+              <line x1="20" y1="30" x2="500" y2="30" stroke="#e6e8eb" stroke-width="1.5"/>
+              <g stroke="#0b57d0" stroke-width="2.5" stroke-linecap="round">
+                <line x1="34" y1="23" x2="34" y2="37"/><line x1="94" y1="23" x2="94" y2="37"/>
+                <line x1="172" y1="23" x2="172" y2="37"/><line x1="266" y1="23" x2="266" y2="37"/>
+                <line x1="360" y1="23" x2="360" y2="37"/><line x1="462" y1="23" x2="462" y2="37"/>
+              </g>
+              <line x1="20" y1="80" x2="500" y2="80" stroke="#e6e8eb" stroke-width="1.5"/>
+              <g stroke="#e8710a" stroke-width="2.5" stroke-linecap="round">
+                <line x1="60" y1="73" x2="60" y2="87"/><line x1="150" y1="73" x2="150" y2="87"/>
+                <line x1="220" y1="73" x2="220" y2="87"/><line x1="330" y1="73" x2="330" y2="87"/>
+                <line x1="410" y1="73" x2="410" y2="87"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="era">
+          <div class="when">Now</div>
+          <h2>The same problem, everywhere</h2>
+          <p class="first">
+            The surprise of the past year is how far the problem travels. Glucose
+            monitors and heart-rate sensors, telescopes and ice cores, networked
+            machines with drifting clocks: almost everything measured in the wild is
+            measured asynchronously, and almost every field still forces a shared
+            clock and hopes. Finance happens to be where the rigorous tools were
+            built first. Our work now is to state the problem beautifully in each new
+            field, and to carry the tools across.
+          </p>
+          <p>
+            The chart from 1979 still opens <a href="/problems/futures.html">our first
+            problem page</a>, drawn from real trades. It is still the best one-picture
+            argument we have, and the passion for answering it exactly has stayed with
+            us, from the thesis, through the trading floor, to this very day.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>&copy; 2026 Black Quantum. All rights reserved.</span>
+    <span><a href="/">Home</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var nav = document.getElementById('topnav');
+  addEventListener('scroll', function () { nav.classList.toggle('scrolled', scrollY > 8); }, { passive: true });
+})();
+</script>
+
+</body>
+</html>

@@ -284,6 +284,34 @@ figure.diagram figcaption {
   max-width: 66ch;
 }
 
+/* ---------- story timeline ---------- */
+.timeline { position: relative; margin-top: 24px; }
+.timeline::before {
+  content: ""; position: absolute; left: 7px; top: 8px; bottom: 8px;
+  width: 2px; background: var(--line);
+}
+.era { position: relative; padding: 0 0 72px 46px; }
+.era:last-child { padding-bottom: 8px; }
+.era::before {
+  content: ""; position: absolute; left: 0; top: 6px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--blue);
+}
+.era .when {
+  font-size: 0.8rem; font-weight: 650; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--blue); margin-bottom: 10px;
+}
+.era h2 {
+  font-size: 1.55rem; letter-spacing: -0.02em; font-weight: 600;
+  line-height: 1.22; margin-bottom: 12px; max-width: 30ch;
+}
+.era p { color: var(--ink-2); font-size: 1.05rem; line-height: 1.7; max-width: 62ch; margin-top: 12px; }
+.era .vignette {
+  margin: 22px 0 4px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--bg-soft); padding: 18px; max-width: 560px;
+}
+.era .vignette svg { width: 100%; height: auto; display: block; }
+
 /* ---------- problem page hero ---------- */
 header.page-hero { background: var(--grad-hero); padding: 96px 0 70px; }
 header.page-hero .crumb { font-size: 0.9rem; color: var(--muted); margin-bottom: 26px; }
