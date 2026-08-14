@@ -284,6 +284,49 @@ figure.diagram figcaption {
   max-width: 66ch;
 }
 
+/* ---------- featured origin (story) ---------- */
+.origin { display: grid; grid-template-columns: minmax(300px, 5fr) minmax(320px, 6fr); gap: 56px; align-items: center; }
+@media (max-width: 900px) { .origin { grid-template-columns: 1fr; } }
+.origin h2.section { max-width: 16ch; }
+.paper-scene { position: relative; min-height: 480px; }
+.paper-scene .sketch { position: absolute; inset: 0; }
+.paper-scene .sketch svg { width: 100%; height: 100%; }
+.paper-card {
+  position: absolute; left: 6%; top: 26%; width: 76%;
+  background: linear-gradient(178deg, #fdfdfc 0%, #f4f3ef 49.6%, #e9e7e1 50.4%, #fbfaf8 100%);
+  border-radius: 6px; padding: 34px 36px 30px;
+  transform: rotate(-6deg);
+  box-shadow: 0 26px 60px rgba(23,26,31,0.22), 0 4px 14px rgba(23,26,31,0.10);
+}
+.paper-card .ptitle {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.05rem, 1.9vw, 1.45rem); line-height: 1.3; font-weight: 600;
+  color: #1c1e21; letter-spacing: 0;
+}
+.paper-card .pauthor {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.95rem; color: #3c4043; margin-top: 14px;
+}
+.paper-card .pdept {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.82rem; color: #5f6368; margin-top: 4px;
+}
+.paper-card .prule { height: 1px; background: #d8d5cd; margin: 18px 0 12px; }
+.paper-card .pfoot {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.82rem; color: #5f6368; font-style: italic;
+}
+.paper-scene .accent-dot {
+  position: absolute; left: 2%; bottom: 12%; width: 56px; height: 56px;
+  border-radius: 50%; background: var(--blue-bright); opacity: 0.9;
+}
+.paper-scene .mini-chart {
+  position: absolute; right: -2%; bottom: 0; width: 38%;
+  background: #0f2350; border-radius: 14px; padding: 16px;
+  box-shadow: 0 18px 44px rgba(23,26,31,0.25);
+}
+.paper-scene .mini-chart svg { width: 100%; height: auto; display: block; }
+
 /* ---------- story timeline ---------- */
 .timeline { position: relative; margin-top: 24px; }
 .timeline::before {
