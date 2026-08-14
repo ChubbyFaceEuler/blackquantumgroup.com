@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Which covariance estimator, when the clocks disagree? — Black Quantum</title>
+<meta name="description" content="Two futures contracts never trade at the same instants. Choosing a covariance estimator has been asymptotic folklore. We make it an exact, same-day computation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="site" id="topnav">
+  <div class="bar">
+    <a class="logo" href="/"><span class="dot"></span>Black Quantum</a>
+    <ul>
+      <li><a href="/#problems">Problems</a></li>
+      <li><a href="/#domains">Why it matters</a></li>
+      <li><a href="/#approach">Approach</a></li>
+      <li><a href="/#people">People</a></li>
+      <li><a href="/#contact">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="page-hero">
+  <div class="wrap">
+    <div class="crumb"><a href="/#problems">Problems</a> / 01 · Markets</div>
+    <h1>Which covariance estimator, when the clocks disagree?</h1>
+    <p class="sub">
+      Two futures contracts never trade at the same instants. How strongly they move
+      together drives hedging, risk, and every network built on top of a correlation
+      matrix. Yet the obvious way to measure it fails, and the rigorous alternatives
+      have only ever been compared in a limit no trading day reaches.
+    </p>
+  </div>
+</header>
+
+<main>
+  <section class="block" style="padding-top:64px;">
+    <div class="wrap">
+
+      <div class="figure-card" style="margin-top:0;">
+        <div class="fig-title">The Epps effect: correlation collapses as the sampling grid tightens</div>
+        <div class="fig-sub">Front-contract trades, CME Globex, 2026-05-15, 13:00–20:00 UTC, Databento market-by-order data</div>
+        <div class="chip-row">
+          <button id="eppsModeReal" class="chip">WTI–Brent · real trades</button>
+          <button id="eppsModeSim" class="chip">Simulated · true ρ = 0.80</button>
+        </div>
+        <canvas id="epps" style="width:100%; height:360px; display:block;"></canvas>
+        <div style="display:flex; align-items:center; gap:16px; margin-top:18px; flex-wrap:wrap;">
+          <span style="font-size:0.86rem; color:var(--muted); white-space:nowrap;">Sampling interval</span>
+          <input type="range" id="eppsH" class="slider" min="0" max="1" step="0.001" value="0.35" aria-label="Sampling interval">
+          <button id="eppsResim" class="chip">Resimulate</button>
+        </div>
+        <p id="eppsStat" class="stat-line"></p>
+        <div class="legend">
+          <span class="item"><span class="swatch" style="background:#0b57d0"></span><span id="legend1">WTI (CL)</span></span>
+          <span class="item"><span class="swatch" style="background:#e8710a"></span><span id="legend2">Brent (BZ)</span></span>
+          <span class="item"><span class="swatch" style="background:#bdc1c6; height:2px;"></span>reference level</span>
+        </div>
+        <div class="fig-note">
+          Drag the slider, or move your pointer across the lower panel. The curve is the
+          previous-tick correlation estimate at each sampling interval, computed from the
+          same trades throughout. The second view shows a simulated pair where the true
+          correlation is 0.80 by construction, so the collapse is unambiguously an
+          artifact of the clock, not of the market.
+        </div>
+      </div>
+
+      <div class="prose" style="margin-top:88px;">
+
+        <h2 style="margin-top:0;">The problem</h2>
+        <p class="first">
+          On 15 May 2026, between 13:00 and 20:00 UTC, WTI crude futures traded 12,890
+          times on CME Globex and Brent traded 4,305 times. The median gap between WTI
+          trades was 0.12 seconds; for Brent it was about one second. No two of those
+          17,195 timestamps coincide. Sampled every five minutes, the two contracts show
+          a correlation near 0.87, which is what anyone who watches oil markets would
+          expect. Sampled every two seconds, from exactly the same trades, the estimate
+          drops to 0.37. More than half the measured dependence is gone.
+        </p>
+        <p>
+          Nothing about the relationship between the two oils changes across that figure.
+          Only the sampling clock does. The collapse is the <strong>Epps effect</strong>,
+          documented in equity data since 1979, and it is the visible symptom of a deeper
+          problem: the data live on two irregular clocks, and the question "how correlated
+          are they?" is usually answered by pretending they live on one.
+        </p>
+
+        <h2>The obvious fix, and what it costs</h2>
+        <p class="first">
+          The standard approach picks a grid, five minutes, one second, whatever the
+          application demands, and carries the last observed price of each asset forward
+          onto it. This is previous-tick sampling, and interpolation and binning are its
+          close relatives. The appeal is real: once both series sit on a shared grid,
+          every tool of classical multivariate statistics applies.
+        </p>
+        <p>
+          The cost is bias with a direction. A grid interval that contains a trade in one
+          asset but not the other contributes a stale price, and stale prices push the
+          measured covariance toward zero. Tighten the grid and the share of stale
+          intervals grows, so the estimate collapses exactly when the data are richest.
+          Widen the grid and the bias fades, but so does the sample: a day of thousands
+          of trades becomes 84 five-minute returns. The practitioner is left choosing a
+          point on a bias-variance curve that the method itself created.
+        </p>
+
+        <h2>Estimators that need no shared clock</h2>
+        <p class="first">
+          This part has been solved. The Hayashi–Yoshida estimator sums products of
+          returns over every pair of overlapping observation intervals, works directly on
+          the raw asynchronous timestamps, and is unbiased with no synchronization step
+          at all. Around it sits a family of refinements: weighted versions, refresh-time
+          corrections, pre-averaged and kernel variants built to withstand market
+          microstructure noise.
+        </p>
+        <p>
+          The unsolved part is choice. On any given day, on any given pair, which member
+          of that family should you trust? The literature compares them asymptotically:
+          each estimator's variance is known in a limit of ever-finer sampling. However,
+          a trading day is not a limit. It is one realized set of timestamps, and two
+          estimators with identical asymptotics can differ materially on the day you
+          actually have. Until now the honest answer to "which estimator?" has been
+          folklore, simulation studies, and habit.
+        </p>
+
+        <div class="pull">
+          A trading day is not a limit. It is one realized set of timestamps, and the
+          estimator comparison should be exact on those timestamps, not approximate in a
+          limit no day reaches.
+        </div>
+
+        <h2>An exact yardstick</h2>
+        <p class="first">
+          Our approach conditions on the observation times actually seen, the way
+          regression conditions on its design matrix. Fix the two sets of timestamps and
+          treat them as the design of the experiment. In our doctoral work at Oxford we
+          showed that, conditional on that design, the finite-sample variance of every
+          estimator in the weighted Hayashi–Yoshida class is an exact polynomial in the
+          observed interval overlaps. Not an approximation, not a limit: a formula you
+          can evaluate on today's timestamps before the market closes.
+        </p>
+        <p>
+          That turns estimator choice from folklore into a computation. For any window,
+          any pair, any candidate estimator, we can state its variance exactly and
+          compare candidates with error bars that are themselves exact. It also yields
+          the best weighting directly: minimizing the exact variance over the weight
+          class is a solvable problem, and the solution adapts to the day's actual
+          trading pattern rather than to an idealized one. Of course, exactness is
+          conditional: the formulas hold under a model for the prices and given the
+          observed clocks. Yet that is precisely the conditioning practitioners already
+          accept in regression, and it is what makes same-day, same-data comparison
+          possible at all.
+        </p>
+
+        <h2>The study under way</h2>
+        <p class="first">
+          We are running this comparison at scale: seven estimators, from plain
+          Hayashi–Yoshida through refresh-time, pre-averaged, kernel, and
+          optimally-weighted variants, on four CME cross-asset pairs, gold with silver,
+          10-year with 30-year Treasuries, WTI with natural gas, euro with sterling
+          futures, across eleven market regimes from 2010 to 2026, at full
+          market-by-order resolution. Every window carries its exact error bars, so the
+          output is not a single winner but a map: which estimator, at which liquidity
+          ratio, under which noise regime. The deliverable is the table we wish had
+          existed when we started trading.
+        </p>
+        <p>
+          The same machinery feeds forward. A correlation matrix with exact per-entry
+          variances is the natural input to network methods, clustering, ranking,
+          lead-lag detection, that currently assume every edge is equally trustworthy.
+          That is <a href="/#problems">problem 03</a>.
+        </p>
+
+        <h2>Further reading</h2>
+        <p class="first">
+          The exact-variance theory is developed in
+          <a href="https://ora.ox.ac.uk/objects/uuid:e0279f41-c83f-4514-bb69-f49bb4159822">Correlation
+          methods in the statistical analysis of financial trading data</a>, DPhil thesis,
+          University of Oxford, 2016. The estimator comparison is a working paper in
+          preparation; if you would like to hear when it is available,
+          <a href="mailto:yang.azzollini@blackquantumgroup.com">write to us</a>.
+        </p>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>&copy; 2026 Black Quantum. All rights reserved.</span>
+    <span><a href="/#problems">← All problems</a></span>
+  </div>
+</footer>
+
+<script src="/epps-data.js"></script>
+<script>
+(function () {
+  var nav = document.getElementById('topnav');
+  addEventListener('scroll', function () { nav.classList.toggle('scrolled', scrollY > 8); }, { passive: true });
+
+  var canvas = document.getElementById('epps');
+  if (!canvas || !canvas.getContext) return;
+  var ctx = canvas.getContext('2d');
+  var slider = document.getElementById('eppsH');
+  var resim = document.getElementById('eppsResim');
+  var stat = document.getElementById('eppsStat');
+  var btnReal = document.getElementById('eppsModeReal');
+  var btnSim = document.getElementById('eppsModeSim');
+
+  /* Real data: CL (WTI) and BZ (Brent) front-contract trades, CME Globex,
+     2026-05-15 13:00-20:00 UTC, from Databento MBO. Curve precomputed offline
+     with the same previous-tick estimator used in the simulation. */
+  var REAL = REAL_EPPS_DATA;
+  var mode = 'real';
+
+  var C_SERIES1 = '#0b57d0', C_SERIES2 = '#e8710a';
+  var C_CURVE = '#0b57d0', C_GRID = '#eceef0', C_TEXT = '#9aa0a6', C_REF = '#bdc1c6';
+
+  function corrReal(h) {
+    var xs = REAL.hs, cs = REAL.corr, lh = Math.log(h);
+    if (h <= xs[0]) return cs[0];
+    for (var i = 1; i < xs.length; i++) {
+      if (h <= xs[i]) {
+        var t = (lh - Math.log(xs[i - 1])) / (Math.log(xs[i]) - Math.log(xs[i - 1]));
+        return cs[i - 1] + (cs[i] - cs[i - 1]) * t;
+      }
+    }
+    return cs[cs.length - 1];
+  }
+
+  function setMode(m) {
+    mode = m;
+    btnReal.classList.toggle('on', m === 'real');
+    btnSim.classList.toggle('on', m === 'sim');
+    resim.style.display = m === 'sim' ? '' : 'none';
+    document.getElementById('legend1').textContent = m === 'real' ? 'WTI (CL)' : 'simulated asset 1';
+    document.getElementById('legend2').textContent = m === 'real' ? 'Brent (BZ)' : 'simulated asset 2';
+    draw();
+  }
+  btnReal.addEventListener('click', function () { setMode('real'); });
+  btnSim.addEventListener('click', function () { setMode('sim'); });
+
+  var T = 23400, RHO = 0.8, H_MIN = 2, H_MAX = 300;
+  var path1, path2, obs1, obs2, curveH = [], curveC = [];
+
+  function randn() {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  function observe(meanGap) {
+    var ts = [0], t = 0;
+    for (;;) {
+      t += -Math.log(Math.random()) * meanGap;
+      if (t >= T) break;
+      ts.push(Math.floor(t));
+    }
+    return ts;
+  }
+
+  function simulate() {
+    path1 = new Float64Array(T + 1);
+    path2 = new Float64Array(T + 1);
+    for (var i = 0; i < T; i++) {
+      var z1 = randn(), z2 = RHO * z1 + Math.sqrt(1 - RHO * RHO) * randn();
+      path1[i + 1] = path1[i] + z1;
+      path2[i + 1] = path2[i] + z2;
+    }
+    obs1 = observe(5);
+    obs2 = observe(7);
+    curveH = []; curveC = [];
+    for (var k = 0; k < 40; k++) {
+      var h = Math.exp(Math.log(H_MIN) + (k / 39) * (Math.log(H_MAX) - Math.log(H_MIN)));
+      curveH.push(h);
+      curveC.push(corrAt(h));
+    }
+  }
+
+  function prevTick(obs, path, h) {
+    var out = [], j = 0;
+    for (var t = 0; t <= T; t += h) {
+      while (j + 1 < obs.length && obs[j + 1] <= t) j++;
+      out.push(path[obs[j]]);
+    }
+    return out;
+  }
+
+  function corrAt(h) {
+    var s1 = prevTick(obs1, path1, h), s2 = prevTick(obs2, path2, h);
+    var n = s1.length - 1;
+    if (n < 3) return NaN;
+    var m1 = 0, m2 = 0, r1 = [], r2 = [];
+    for (var k = 1; k <= n; k++) {
+      var a = s1[k] - s1[k - 1], b = s2[k] - s2[k - 1];
+      r1.push(a); r2.push(b); m1 += a; m2 += b;
+    }
+    m1 /= n; m2 /= n;
+    var c = 0, v1 = 0, v2 = 0;
+    for (var q = 0; q < n; q++) {
+      c += (r1[q] - m1) * (r2[q] - m2);
+      v1 += (r1[q] - m1) * (r1[q] - m1);
+      v2 += (r2[q] - m2) * (r2[q] - m2);
+    }
+    return c / Math.sqrt(v1 * v2);
+  }
+
+  function sliderH() {
+    var v = parseFloat(slider.value);
+    return Math.exp(Math.log(H_MIN) + v * (Math.log(H_MAX) - Math.log(H_MIN)));
+  }
+
+  function xOf(h, x0, x1) {
+    return x0 + (Math.log(h) - Math.log(H_MIN)) / (Math.log(H_MAX) - Math.log(H_MIN)) * (x1 - x0);
+  }
+
+  function fmtH(h) {
+    return h < 60 ? Math.round(h) + 's' : (h / 60).toFixed(1).replace(/\.0$/, '') + 'm';
+  }
+
+  var plotBox = null;
+
+  function draw() {
+    var dpr = Math.min(devicePixelRatio || 1, 2);
+    var W = canvas.clientWidth, H = canvas.clientHeight;
+    if (W < 10 || H < 10) return;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    /* --- price paths strip --- */
+    var stripH = 90;
+    var seriesData;
+    if (mode === 'real') {
+      seriesData = [[REAL.path1, C_SERIES1], [REAL.path2, C_SERIES2]];
+    } else {
+      var a1 = [], a2 = [];
+      for (var ti = 0; ti <= T; ti += 20) { a1.push(path1[ti]); a2.push(path2[ti]); }
+      seriesData = [[a1, C_SERIES1], [a2, C_SERIES2]];
+    }
+    for (var s = 0; s < 2; s++) {
+      var p = seriesData[s][0], mn = Infinity, mx = -Infinity;
+      for (var i = 0; i < p.length; i++) {
+        if (p[i] == null) continue;
+        if (p[i] < mn) mn = p[i]; if (p[i] > mx) mx = p[i];
+      }
+      ctx.strokeStyle = seriesData[s][1];
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      var started = false;
+      for (var k2 = 0; k2 < p.length; k2++) {
+        if (p[k2] == null) continue;
+        var x = k2 / (p.length - 1) * W;
+        var y = 10 + (1 - (p[k2] - mn) / (mx - mn || 1)) * (stripH - 20);
+        started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        started = true;
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = C_TEXT;
+    ctx.font = '11px ui-monospace, Menlo, monospace';
+    ctx.fillText(mode === 'real'
+      ? 'WTI (blue) vs Brent (orange) — CME trades, ' + REAL.date + ', 13:00–20:00 UTC'
+      : 'two simulated correlated price paths, one trading day', 4, stripH + 6);
+
+    /* --- correlation vs sampling-interval plot --- */
+    var px0 = 44, px1 = W - 12, py0 = stripH + 30, py1 = H - 26;
+    plotBox = { x0: px0, x1: px1 };
+    var yOf = function (c) { return py1 - (c + 0.1) / 1.1 * (py1 - py0); };
+
+    ctx.strokeStyle = C_GRID;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = C_TEXT;
+    [0, 0.4, 0.8].forEach(function (t) {
+      var yy = yOf(t);
+      ctx.beginPath(); ctx.moveTo(px0, yy); ctx.lineTo(px1, yy); ctx.stroke();
+      ctx.fillText(t.toFixed(1), 16, yy + 4);
+    });
+    [2, 5, 15, 60, 300].forEach(function (h) {
+      ctx.fillText(fmtH(h), xOf(h, px0, px1) - 8, H - 8);
+    });
+
+    var refC = mode === 'real' ? REAL.refCorr : RHO;
+    var refLabel = mode === 'real' ? '5-min corr = ' + REAL.refCorr.toFixed(2) : 'true ρ = 0.80';
+    var yr = yOf(refC);
+    ctx.strokeStyle = C_REF;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(px0, yr); ctx.lineTo(px1, yr); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#5f6368';
+    ctx.fillText(refLabel, px1 - 118, yr - 6);
+
+    var cH = mode === 'real' ? REAL.hs : curveH;
+    var cC = mode === 'real' ? REAL.corr : curveC;
+    ctx.strokeStyle = C_CURVE;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    var cStarted = false;
+    for (var k = 0; k < cH.length; k++) {
+      if (cC[k] == null || isNaN(cC[k])) continue;
+      var cx = xOf(cH[k], px0, px1), cy = yOf(cC[k]);
+      cStarted ? ctx.lineTo(cx, cy) : ctx.moveTo(cx, cy);
+      cStarted = true;
+    }
+    ctx.stroke();
+
+    /* current-h marker */
+    var h = sliderH();
+    var ch = mode === 'real' ? corrReal(h) : corrAt(h);
+    var mx2 = xOf(h, px0, px1), my2 = yOf(ch);
+    ctx.strokeStyle = 'rgba(11,87,208,0.25)';
+    ctx.beginPath(); ctx.moveTo(mx2, py0); ctx.lineTo(mx2, py1); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = C_CURVE;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(mx2, my2, 5.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    stat.textContent = mode === 'real'
+      ? 'sampling every ' + fmtH(h) + '  →  ρ̂ = ' + (ch == null || isNaN(ch) ? '—' : ch.toFixed(2)) +
+        '   (CL: ' + REAL.n1.toLocaleString() + ' trades, median gap ' + REAL.gap1 + 's · BZ: ' +
+        REAL.n2.toLocaleString() + ' trades, gap ' + REAL.gap2 + 's · previous-tick)'
+      : 'sampling every ' + fmtH(h) +
+        '  →  ρ̂ = ' + (isNaN(ch) ? '—' : ch.toFixed(2)) +
+        '   (true ρ = 0.80 · asset 1 trades ~5s, asset 2 ~7s · previous-tick sampling)';
+  }
+
+  /* pointer over the plot moves the marker */
+  canvas.addEventListener('pointermove', function (e) {
+    if (!plotBox) return;
+    var b = canvas.getBoundingClientRect();
+    var x = e.clientX - b.left;
+    if (x < plotBox.x0 || x > plotBox.x1) return;
+    var v = (x - plotBox.x0) / (plotBox.x1 - plotBox.x0);
+    slider.value = Math.max(0, Math.min(1, v));
+    draw();
+  });
+
+  simulate();
+  setMode('real');
+  slider.addEventListener('input', draw);
+  resim.addEventListener('click', function () { simulate(); draw(); });
+  addEventListener('resize', draw);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(draw).observe(canvas);
+})();
+</script>
+
+</body>
+</html>

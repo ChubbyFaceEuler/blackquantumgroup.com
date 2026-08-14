@@ -3,944 +3,515 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Black Quantum — AI &amp; Statistics Research Lab</title>
-<meta name="description" content="Black Quantum is a statistics research and deployment lab. When measurements arrive out of step, classical methods break down. We build estimators that do not.">
-<style>
-  :root {
-    --bg: #000000;
-    --bg-soft: #0a0a0c;
-    --surface: #101014;
-    --text: #ededf0;
-    --muted: #8b8b96;
-    --accent: #a78bfa;
-    --accent-dim: #6d5bb8;
-    --border: #1e1e26;
-    --max: 1040px;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.65;
-    font-size: 17px;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  ::selection { background: var(--accent-dim); color: #fff; }
-
-  /* ---------- particle canvas ---------- */
-  #field {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-  }
-  .hero-wrap {
-    position: relative;
-  }
-  .hero-wrap::after {
-    content: "";
-    position: absolute; left: 0; right: 0; bottom: 0; height: 140px;
-    background: linear-gradient(to bottom, transparent, var(--bg));
-    pointer-events: none;
-  }
-
-  /* ---------- nav ---------- */
-  nav {
-    position: sticky; top: 0;
-    background: rgba(0,0,0,0.78);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-    z-index: 10;
-  }
-  .nav-inner {
-    max-width: var(--max); margin: 0 auto;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 28px;
-  }
-  .brand {
-    display: flex; align-items: center; gap: 10px;
-    font-weight: 650; letter-spacing: 0.02em; color: var(--text);
-    font-size: 15.5px;
-  }
-  .brand .mark {
-    width: 22px; height: 22px; border-radius: 6px;
-    background:
-      radial-gradient(circle at 30% 30%, var(--accent) 0%, transparent 55%),
-      radial-gradient(circle at 72% 72%, var(--accent-dim) 0%, transparent 60%),
-      #000;
-    border: 1px solid var(--border);
-    animation: markPulse 5s ease-in-out infinite;
-  }
-  @keyframes markPulse {
-    0%, 100% { box-shadow: 0 0 0 rgba(167,139,250,0); }
-    50% { box-shadow: 0 0 14px rgba(167,139,250,0.45); }
-  }
-  .nav-inner ul { display: flex; gap: 26px; list-style: none; flex-wrap: wrap; justify-content: flex-end; }
-  .nav-inner ul a {
-    color: var(--muted); font-size: 14px; letter-spacing: 0.02em;
-    position: relative;
-  }
-  .nav-inner ul a::after {
-    content: ""; position: absolute; left: 0; bottom: -4px;
-    width: 0; height: 1px; background: var(--accent);
-    transition: width 0.25s ease;
-  }
-  .nav-inner ul a:hover { color: var(--text); text-decoration: none; }
-  .nav-inner ul a:hover::after { width: 100%; }
-
-  main { max-width: var(--max); margin: 0 auto; padding: 0 28px; }
-
-  /* ---------- hero ---------- */
-  header.hero {
-    padding: 150px 0 120px;
-    position: relative;
-  }
-  .hero h1 {
-    font-size: clamp(2.4rem, 6vw, 4rem);
-    font-weight: 700; letter-spacing: -0.03em; line-height: 1.12;
-    max-width: 18ch;
-  }
-  .hero h1 em {
-    font-style: normal;
-    background: linear-gradient(90deg, var(--accent), #c4b5fd, var(--accent-dim), var(--accent));
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    animation: shimmer 7s linear infinite;
-  }
-  @keyframes shimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 300% 50%; }
-  }
-  .hero p.sub {
-    color: var(--muted); margin-top: 26px; font-size: 1.18rem;
-    max-width: 56ch;
-  }
-  .hero .cta-row { margin-top: 40px; display: flex; gap: 14px; flex-wrap: wrap; }
-  .btn {
-    display: inline-block; padding: 11px 24px; border-radius: 8px;
-    font-size: 15px; font-weight: 550; letter-spacing: 0.01em;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-  }
-  .btn.primary { background: var(--text); color: #000; }
-  .btn.primary:hover {
-    background: #fff; text-decoration: none;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(167,139,250,0.25);
-  }
-  .btn.ghost { border: 1px solid var(--border); color: var(--text); }
-  .btn.ghost:hover {
-    border-color: var(--accent-dim); text-decoration: none;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(167,139,250,0.12);
-  }
-
-  /* hero entrance */
-  .hero h1, .hero p.sub, .hero .cta-row {
-    opacity: 0; transform: translateY(18px);
-    animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .hero p.sub { animation-delay: 0.15s; }
-  .hero .cta-row { animation-delay: 0.3s; }
-  @keyframes rise {
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ---------- scroll reveal ---------- */
-  .reveal {
-    opacity: 0; transform: translateY(26px);
-    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  .reveal.in { opacity: 1; transform: translateY(0); }
-
-  /* ---------- sections ---------- */
-  section { padding: 84px 0; border-top: 1px solid var(--border); }
-  .kicker {
-    font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em;
-    color: var(--accent); font-weight: 600; margin-bottom: 14px;
-  }
-  section h2 {
-    font-size: 1.9rem; font-weight: 650; letter-spacing: -0.02em;
-    margin-bottom: 18px; max-width: 24ch;
-  }
-  section > p.lede { color: var(--muted); max-width: 62ch; margin-bottom: 40px; font-size: 1.06rem; }
-
-  .grid {
-    display: grid; gap: 18px;
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  }
-  .card {
-    background: var(--bg-soft);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 26px;
-    position: relative;
-    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  }
-  .card:hover {
-    border-color: #33334a;
-    transform: translateY(-4px);
-    box-shadow: 0 14px 40px rgba(0,0,0,0.5), 0 0 24px rgba(167,139,250,0.07);
-  }
-  .card .num {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    color: var(--accent-dim); font-size: 13px; margin-bottom: 14px; display: block;
-    transition: color 0.25s ease;
-  }
-  .card:hover .num { color: var(--accent); }
-  .card h3 { font-size: 1.12rem; font-weight: 620; margin-bottom: 10px; letter-spacing: -0.01em; }
-  .card p { color: var(--muted); font-size: 15px; line-height: 1.6; }
-
-  /* stagger children */
-  .grid .card:nth-child(1) { transition-delay: 0s; }
-  .grid.reveal-group .card { opacity: 0; transform: translateY(26px); }
-  .grid.reveal-group.in .card {
-    opacity: 1; transform: translateY(0);
-    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1),
-                border-color 0.25s ease, box-shadow 0.25s ease;
-  }
-  .grid.reveal-group.in .card:nth-child(1) { transition-delay: 0.00s; }
-  .grid.reveal-group.in .card:nth-child(2) { transition-delay: 0.08s; }
-  .grid.reveal-group.in .card:nth-child(3) { transition-delay: 0.16s; }
-  .grid.reveal-group.in .card:nth-child(4) { transition-delay: 0.24s; }
-  .grid.reveal-group.in .card:nth-child(5) { transition-delay: 0.32s; }
-  .grid.reveal-group.in .card:nth-child(6) { transition-delay: 0.40s; }
-  .grid.reveal-group.in .card:nth-child(7) { transition-delay: 0.48s; }
-  .grid.reveal-group.in .card:nth-child(8) { transition-delay: 0.56s; }
-
-  /* ---------- domains ---------- */
-  .thesis {
-    background: var(--bg-soft);
-    border: 1px solid var(--border);
-    border-left: 2px solid var(--accent);
-    border-radius: 12px;
-    padding: 24px 28px; margin-bottom: 40px;
-  }
-  .thesis p { margin: 0; color: var(--text); font-size: 1.06rem; }
-  .thesis p .hl { color: var(--accent); font-weight: 600; }
-  .domain .field {
-    font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--accent-dim); font-weight: 600; margin-bottom: 10px; display: block;
-  }
-  .domain .fails {
-    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
-    font-size: 13.5px; color: var(--muted);
-  }
-  .domain .fails b { color: #c4b5fd; font-weight: 600; }
-
-  /* ---------- principles ---------- */
-  .principles { display: grid; gap: 0; }
-  .principle {
-    display: grid; grid-template-columns: 200px 1fr; gap: 24px;
-    padding: 26px 0; border-bottom: 1px solid var(--border);
-    transition: padding-left 0.25s ease;
-  }
-  .principle:hover { padding-left: 10px; }
-  .principle:last-child { border-bottom: none; }
-  .principle h3 { font-size: 1.02rem; font-weight: 620; }
-  .principle p { color: var(--muted); font-size: 15.5px; }
-
-  /* ---------- publications ---------- */
-  ul.pubs { list-style: none; }
-  ul.pubs li {
-    padding: 22px 0; border-bottom: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 4px;
-    transition: padding-left 0.25s ease;
-  }
-  ul.pubs li:hover { padding-left: 10px; }
-  ul.pubs li:last-child { border-bottom: none; }
-  ul.pubs .title { font-weight: 600; font-size: 1.05rem; }
-  ul.pubs .venue { color: var(--muted); font-size: 14.5px; }
-
-  /* ---------- contact ---------- */
-  .contact-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
-  .contact-links a {
-    border: 1px solid var(--border); border-radius: 8px;
-    padding: 10px 20px; font-size: 15px; color: var(--text);
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  }
-  .contact-links a:hover {
-    border-color: var(--accent-dim); text-decoration: none;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(167,139,250,0.12);
-  }
-
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 40px 28px; text-align: center;
-    color: var(--muted); font-size: 13.5px;
-  }
-
-  @media (max-width: 640px) {
-    header.hero { padding: 100px 0 80px; }
-    section { padding: 60px 0; }
-    .principle { grid-template-columns: 1fr; gap: 8px; }
-    .nav-inner ul { gap: 16px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; transition: none !important; }
-    .reveal, .grid.reveal-group .card, .hero h1, .hero p.sub, .hero .cta-row { opacity: 1 !important; transform: none !important; }
-    #field { display: none; }
-  }
-</style>
+<meta name="color-scheme" content="light">
+<title>Black Quantum — Statistics for asynchronous time series</title>
+<meta name="description" content="Black Quantum is a statistics research and deployment lab. We build estimators for data that never line up: provable, replicable, and fast enough to run live.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-<nav>
-  <div class="nav-inner">
-    <span class="brand"><span class="mark"></span>BLACK QUANTUM</span>
+<nav class="site" id="topnav">
+  <div class="bar">
+    <a class="logo" href="/"><span class="dot"></span>Black Quantum</a>
     <ul>
-      <li><a href="#research">Research</a></li>
-      <li><a href="#domains">Domains</a></li>
-      <li><a href="#demo">Demo</a></li>
+      <li><a href="#problems">Problems</a></li>
+      <li><a href="#domains">Why it matters</a></li>
       <li><a href="#approach">Approach</a></li>
       <li><a href="#people">People</a></li>
       <li><a href="#publications">Publications</a></li>
-      <li><a href="#news">News</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
   </div>
 </nav>
 
-<div class="hero-wrap">
-  <canvas id="field"></canvas>
-  <main style="max-width: var(--max); margin: 0 auto; padding: 0 28px;">
-    <header class="hero">
-      <h1>Rigorous statistics for <em>asynchronous time series</em>.</h1>
-      <p class="sub">
-        Black Quantum is a statistics research and deployment lab. When measurements
-        arrive out of step, classical methods break down. We build estimators that do not.
-      </p>
-      <div class="cta-row">
-        <a class="btn primary" href="#research">Our research</a>
-        <a class="btn ghost" href="#contact">Get in touch</a>
-      </div>
-    </header>
-  </main>
-</div>
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Black Quantum · Statistics research lab</div>
+    <h1 class="display">Statistics for data that never line up.</h1>
+    <p class="sub">
+      Almost everything we measure is recorded on its own irregular clock. Ask how two
+      such signals move together and classical methods quietly fail. We build estimators
+      that work on the clocks you actually observed: provable, replicable, and fast
+      enough to run live.
+    </p>
+    <div class="cta-row">
+      <a class="btn primary" href="#problems">Explore the problems</a>
+      <a class="btn ghost" href="#contact">Work with us</a>
+    </div>
+
+    <figure class="hero-figure" aria-label="Two observation clocks with irregular ticks and their overlap structure">
+      <svg viewBox="0 0 1200 250" xmlns="http://www.w3.org/2000/svg" role="img">
+        <defs>
+          <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1a73e8" stop-opacity="0.16"/>
+            <stop offset="1" stop-color="#1a73e8" stop-opacity="0.05"/>
+          </linearGradient>
+        </defs>
+        <!-- overlap bands (the observed design Γ) -->
+        <g>
+          <rect x="90"  y="78" width="60"  height="94" fill="url(#band)"/>
+          <rect x="230" y="78" width="30"  height="94" fill="url(#band)"/>
+          <rect x="340" y="78" width="40"  height="94" fill="url(#band)"/>
+          <rect x="430" y="78" width="60"  height="94" fill="url(#band)"/>
+          <rect x="560" y="78" width="80"  height="94" fill="url(#band)"/>
+          <rect x="700" y="78" width="20"  height="94" fill="url(#band)"/>
+          <rect x="760" y="78" width="70"  height="94" fill="url(#band)"/>
+          <rect x="905" y="78" width="85"  height="94" fill="url(#band)"/>
+          <rect x="1010" y="78" width="110" height="94" fill="url(#band)"/>
+        </g>
+        <!-- clock X -->
+        <line x1="30" y1="72" x2="1170" y2="72" stroke="#dadce0" stroke-width="1.5"/>
+        <g stroke="#0b57d0" stroke-width="2.5" stroke-linecap="round">
+          <line x1="40" y1="62" x2="40" y2="82"/><line x1="150" y1="62" x2="150" y2="82"/>
+          <line x1="230" y1="62" x2="230" y2="82"/><line x1="380" y1="62" x2="380" y2="82"/>
+          <line x1="430" y1="62" x2="430" y2="82"/><line x1="560" y1="62" x2="560" y2="82"/>
+          <line x1="700" y1="62" x2="700" y2="82"/><line x1="760" y1="62" x2="760" y2="82"/>
+          <line x1="905" y1="62" x2="905" y2="82"/><line x1="1010" y1="62" x2="1010" y2="82"/>
+          <line x1="1160" y1="62" x2="1160" y2="82"/>
+        </g>
+        <!-- clock Y -->
+        <line x1="30" y1="178" x2="1170" y2="178" stroke="#dadce0" stroke-width="1.5"/>
+        <g stroke="#e8710a" stroke-width="2.5" stroke-linecap="round">
+          <line x1="90" y1="168" x2="90" y2="188"/><line x1="260" y1="168" x2="260" y2="188"/>
+          <line x1="340" y1="168" x2="340" y2="188"/><line x1="490" y1="168" x2="490" y2="188"/>
+          <line x1="640" y1="168" x2="640" y2="188"/><line x1="720" y1="168" x2="720" y2="188"/>
+          <line x1="830" y1="168" x2="830" y2="188"/><line x1="990" y1="168" x2="990" y2="188"/>
+          <line x1="1120" y1="168" x2="1120" y2="188"/>
+        </g>
+        <text x="30" y="40" font-size="13" fill="#5f6368" font-family="ui-monospace, Menlo, monospace">clock of signal X — ticks arrive when they arrive</text>
+        <text x="30" y="222" font-size="13" fill="#5f6368" font-family="ui-monospace, Menlo, monospace">clock of signal Y — a different, irregular clock</text>
+      </svg>
+      <figcaption class="fig-note" style="margin-top:10px">
+        Two signals, each on its own clock. The shaded columns are the overlaps of their
+        observation intervals: the structure our estimators condition on.
+      </figcaption>
+    </figure>
+  </div>
+</header>
 
 <main>
-  <section id="research">
-    <div class="kicker reveal">Research</div>
-    <h2 class="reveal">What we work on</h2>
-    <p class="lede reveal">
-      Our core programme is inference for high-frequency, asynchronously observed
-      data — a problem where classical statistics breaks down and careful theory
-      pays off in live systems.
-    </p>
-    <div class="grid reveal-group">
-      <div class="card">
-        <span class="num">01</span>
-        <h3>High-frequency covariance estimation</h3>
-        <p>Covariance and dependence estimation under asynchronous sampling and
-        microstructure noise, with rigorous asymptotic guarantees carried through
-        to deployable estimators.</p>
-      </div>
-      <div class="card">
-        <span class="num">02</span>
-        <h3>Market microstructure</h3>
-        <p>Reconstruction and modelling of limit-order-book dynamics from raw
-        order-by-order data; microstructure-aware features for prediction on
-        futures markets.</p>
-      </div>
-      <div class="card">
-        <span class="num">03</span>
-        <h3>Neural networks for noisy, non-stationary data</h3>
-        <p>Neural methods that respect the statistical structure of financial data —
-        regime change, heavy tails, and the ever-present risk of overfitting.</p>
-      </div>
-      <div class="card">
-        <span class="num">04</span>
-        <h3>Rigorous strategy evaluation</h3>
-        <p>Walk-forward validation, look-ahead detection, and formally verified
-        research pipelines. We treat evaluation methodology as a research problem
-        in its own right.</p>
-      </div>
-    </div>
-  </section>
 
-  <section id="domains">
-    <div class="kicker reveal">Why it matters</div>
-    <h2 class="reveal">The same problem, across science</h2>
-    <div class="thesis reveal">
-      <p>
-        Almost everything we measure is observed <span class="hl">asynchronously</span> —
-        two processes, each recorded at its own irregular times. Ask how they move
-        together and the standard fix is to force both onto a shared clock:
-        interpolate, bin, resample. That single step injects bias — correlations
-        collapse toward zero as sampling tightens (the <em>Epps effect</em>). Finance
-        built rigorous estimators that work <span class="hl">natively on asynchronous
-        data</span>, with no synchronization. That machinery has barely left finance.
-        The same structure — and the same broken workarounds — sit at the foundation
-        of field after field.
+  <section class="block" id="mission">
+    <div class="wrap">
+      <p class="statement reveal">
+        The standard fix is to force both signals onto a
+        <span class="hl">shared clock</span>: interpolate, bin, resample.
+        That one step injects bias that no amount of data removes.
+        We work directly on the <span class="hl">observed clocks</span> instead,
+        and the bias never enters.
       </p>
     </div>
-    <div class="grid reveal-group">
-      <div class="card domain">
-        <span class="field">Climate science</span>
-        <h3>Proxy records</h3>
-        <p>Ice cores, sediments, and tree rings are sampled at irregular depths — and
-        even the timestamps are uncertain. Correlating two proxies is a known minefield.</p>
-        <div class="fails"><b>Today:</b> interpolate onto shared age models; bias compounds with dating error.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Astronomy</span>
-        <h3>Light curves</h3>
-        <p>Reverberation mapping and multiwavelength time-lags need the covariance of two
-        unevenly sampled light curves from telescopes that observe when they can.</p>
-        <div class="fails"><b>Today:</b> interpolated cross-correlation functions, which reintroduce the same bias.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Clinical medicine</span>
-        <h3>Health records</h3>
-        <p>Labs are drawn sporadically, vitals frequently. The coupling between them
-        carries clinical signal — but the sampling is fully asynchronous.</p>
-        <div class="fails"><b>Today:</b> impute-then-model, which sidesteps the dependence structure rather than estimating it.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Digital health</span>
-        <h3>Wearables</h3>
-        <p>Glucose every five minutes, heart rate every second, motion at 50&nbsp;Hz. The
-        cross-signal coupling is the product — and it's measured off-clock.</p>
-        <div class="fails"><b>Today:</b> resample-and-correlate; "weak, not significant" may be an artifact.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Genomics</span>
-        <h3>Single-cell dynamics</h3>
-        <p>Sequencing destroys the cell, so no cell is seen twice and time itself is
-        reconstructed. Gene–gene dynamics live on a latent, asynchronous clock.</p>
-        <div class="fails"><b>Today:</b> ad-hoc pseudotime binning — asynchrony plus an unobserved clock.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Distributed systems</span>
-        <h3>Networked clocks</h3>
-        <p>Packets are timestamped, but every machine keeps its own drifting clock. Here
-        the twist inverts: the clock relationship itself is the unknown you must estimate.</p>
-        <div class="fails"><b>Today:</b> NTP breaks on asymmetric paths — the shared clock is provably unrecoverable.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Autonomous driving</span>
-        <h3>Sensor fusion</h3>
-        <p>Camera, LiDAR, and radar each sample the road at their own rate — no two ever
-        capture the same instant. Fusing them safely means reconciling streams that never line up.</p>
-        <div class="fails"><b>Today:</b> interpolate timestamps to force alignment — misalignment surfaces as phantom objects.</div>
-      </div>
-      <div class="card domain">
-        <span class="field">Finance</span>
-        <h3>Where it was solved</h3>
-        <p>High-frequency covariance under asynchronous ticks — the problem where the
-        rigorous estimators were first built, and our home ground.</p>
-        <div class="fails"><b>Today:</b> solved rigorously — and, so far, stranded in this one field.</div>
-      </div>
-    </div>
-    <p class="lede reveal" style="margin-top:36px; margin-bottom:0;">
-      Some of these break new ground even for the finance toolkit: <strong>uncertain
-      observation times</strong> (climate, networked clocks) and a <strong>latent, reconstructed
-      clock</strong> (single-cell). These are not ports of an existing method — they are open
-      problems, and the focus of our work.
-    </p>
   </section>
 
-  <section id="demo">
-    <div class="kicker reveal">Interactive</div>
-    <h2 class="reveal">The Epps effect, live</h2>
-    <p class="lede reveal">
-      Real data: WTI (CL) and Brent (BZ) crude futures trades on CME, one session
-      (2026-05-15, from Databento market-by-order data). Their correlation measured at
-      5-minute sampling is ≈0.87 — but sample the same trades on a finer grid
-      (previous-tick) and the estimate collapses: the <em>Epps effect</em>. The second
-      toggle shows a simulated pair where the truth (ρ&nbsp;=&nbsp;0.80) is known
-      exactly. This is the failure mode our estimators are built to fix. Drag the slider.
-    </p>
-    <div class="card reveal" style="padding: 22px;">
-      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
-        <button id="eppsModeReal"
-          style="background:none; border:1px solid var(--border); color:var(--muted);
-                 border-radius:8px; padding:6px 14px; font-size:13.5px; cursor:pointer;">
-          WTI–Brent · real trades
-        </button>
-        <button id="eppsModeSim"
-          style="background:none; border:1px solid var(--border); color:var(--muted);
-                 border-radius:8px; padding:6px 14px; font-size:13.5px; cursor:pointer;">
-          Simulated · true ρ = 0.80
-        </button>
-      </div>
-      <canvas id="epps" style="width:100%; height:330px; display:block;"></canvas>
-      <div style="display:flex; align-items:center; gap:16px; margin-top:18px; flex-wrap:wrap;">
-        <span style="font-size:13.5px; color:var(--muted); white-space:nowrap;">Sampling interval</span>
-        <input type="range" id="eppsH" min="0" max="1" step="0.001" value="0.35"
-               style="flex:1; min-width:180px; accent-color:var(--accent);"
-               aria-label="Sampling interval">
-        <button id="eppsResim"
-          style="background:none; border:1px solid var(--border); color:var(--text);
-                 border-radius:8px; padding:8px 16px; font-size:14px; cursor:pointer;">
-          Resimulate
-        </button>
-      </div>
-      <p id="eppsStat" style="margin-top:14px; font-family:ui-monospace,'SF Mono',Menlo,monospace;
-         font-size:13.5px; color:var(--muted);"></p>
-    </div>
-  </section>
+  <section class="block tint" id="problems">
+    <div class="wrap">
+      <div class="kicker reveal">Problems</div>
+      <h2 class="section reveal">One principle, stated on real problems</h2>
+      <p class="lede reveal">
+        We pick problems the way the best labs do: each one matters on its own, and each
+        one exercises the same root idea, so a solution travels. Every problem gets its
+        own page, its own data, and one figure that shows the failure before any method
+        appears.
+      </p>
+      <div class="problem-grid reveal-group">
 
-  <section id="approach">
-    <div class="kicker reveal">Approach</div>
-    <h2 class="reveal">How we do research</h2>
-    <div class="principles">
-      <div class="principle reveal">
-        <h3>Theory first</h3>
-        <p>Estimators come with proofs, not just backtests. If we can't state the
-        assumptions, we don't trust the result.</p>
-      </div>
-      <div class="principle reveal">
-        <h3>Adversarial evaluation</h3>
-        <p>Every positive result is treated as a bug until it survives walk-forward
-        testing, leakage audits, and independent replication.</p>
-      </div>
-      <div class="principle reveal">
-        <h3>Theory to deployment</h3>
-        <p>Research isn't finished at the paper. We carry methods through
-        simulation, real data, and production infrastructure.</p>
-      </div>
-      <div class="principle reveal">
-        <h3>Formal verification</h3>
-        <p>Where the mathematics matters most, we machine-check it — bringing
-        proof assistants such as <a href="https://lean-lang.org/">Lean</a> into
-        quantitative finance.</p>
+        <a class="problem-card" href="/problems/futures.html">
+          <div class="art">
+            <svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs><linearGradient id="pa1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0b57d0"/><stop offset="1" stop-color="#66a3ff"/>
+              </linearGradient></defs>
+              <rect width="400" height="190" fill="url(#pa1)"/>
+              <polyline points="20,120 60,100 95,112 140,80 180,92 225,62 265,78 310,50 350,64 385,42"
+                fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linejoin="round"/>
+              <polyline points="20,150 70,138 110,148 160,118 205,132 250,104 300,118 345,94 385,104"
+                fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.5" stroke-linejoin="round"/>
+              <g fill="rgba(255,255,255,0.85)">
+                <circle cx="60" cy="100" r="3"/><circle cx="140" cy="80" r="3"/>
+                <circle cx="225" cy="62" r="3"/><circle cx="310" cy="50" r="3"/>
+              </g>
+            </svg>
+          </div>
+          <div class="body">
+            <div class="tag">Markets · Problem 01</div>
+            <h3>Which covariance estimator, when the clocks disagree?</h3>
+            <p>Two futures contracts never trade at the same instants. Measure their
+            correlation naively and it collapses as you look closer. Choosing the right
+            estimator has been asymptotic folklore. We make it an exact, same-day computation.</p>
+            <div class="go">Read the problem →</div>
+          </div>
+        </a>
+
+        <a class="problem-card" href="#contact">
+          <div class="art">
+            <svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs><linearGradient id="pa2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0b8043"/><stop offset="1" stop-color="#7bd8a6"/>
+              </linearGradient></defs>
+              <rect width="400" height="190" fill="url(#pa2)"/>
+              <path d="M20,110 C60,70 100,70 140,110 C180,150 220,150 260,110 C300,70 340,70 380,110"
+                fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="2.5"/>
+              <polyline points="20,150 32,142 44,156 58,138 70,152 84,134 96,150 110,132 124,148 138,128 152,146 166,126 180,142 194,124 208,140 222,120 236,138 250,118 264,134 278,116 292,132 306,112 320,130 334,110 348,126 362,108 376,122 388,104"
+                fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="body">
+            <div class="tag">Digital health · Problem 02</div>
+            <h3>Clinical endpoints from wearable sensors</h3>
+            <p>Glucose every five minutes, heart rate every second, motion at 50 Hz.
+            Whether an endpoint is valid depends on how rough the underlying signal is,
+            and the answer decides how many patients a trial needs.</p>
+            <div class="go soon">Page in preparation</div>
+          </div>
+        </a>
+
+        <a class="problem-card" href="#contact">
+          <div class="art">
+            <svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs><linearGradient id="pa3" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#5e35b1"/><stop offset="1" stop-color="#b39ddb"/>
+              </linearGradient></defs>
+              <rect width="400" height="190" fill="url(#pa3)"/>
+              <g stroke="rgba(255,255,255,0.5)">
+                <line x1="80" y1="60" x2="200" y2="40" stroke-width="1"/>
+                <line x1="80" y1="60" x2="150" y2="140" stroke-width="4"/>
+                <line x1="200" y1="40" x2="150" y2="140" stroke-width="2"/>
+                <line x1="200" y1="40" x2="320" y2="90" stroke-width="5"/>
+                <line x1="150" y1="140" x2="320" y2="90" stroke-width="1"/>
+                <line x1="320" y1="90" x2="360" y2="160" stroke-width="2"/>
+                <line x1="150" y1="140" x2="260" y2="165" stroke-width="3"/>
+              </g>
+              <g fill="#fff">
+                <circle cx="80" cy="60" r="7"/><circle cx="200" cy="40" r="9"/>
+                <circle cx="150" cy="140" r="8"/><circle cx="320" cy="90" r="10"/>
+                <circle cx="360" cy="160" r="6"/><circle cx="260" cy="165" r="7"/>
+              </g>
+            </svg>
+          </div>
+          <div class="body">
+            <div class="tag">Networks · Problem 03</div>
+            <h3>Networks built from noisy, unequal edges</h3>
+            <p>Clustering and ranking methods usually assume every measured edge is equally
+            trustworthy. Real edges are estimated, each with its own error. Exact per-edge
+            variances turn one global noise knob into a full weight matrix.</p>
+            <div class="go soon">Page in preparation</div>
+          </div>
+        </a>
+
+        <a class="problem-card" href="#publications">
+          <div class="art">
+            <svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <defs><linearGradient id="pa4" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0f2350"/><stop offset="1" stop-color="#3b6bc4"/>
+              </linearGradient></defs>
+              <rect width="400" height="190" fill="url(#pa4)"/>
+              <g fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.5">
+                <path d="M30,150 h55 v-25 h45 v-30 h60 v-20 h50 v-30 h70 v-15 h60"/>
+              </g>
+              <g fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2.5">
+                <path d="M30,160 h35 v-18 h60 v-22 h40 v-28 h75 v-24 h55 v-26 h75"/>
+              </g>
+            </svg>
+          </div>
+          <div class="body">
+            <div class="tag">Foundations · The principle</div>
+            <h3>The observed-clock principle</h3>
+            <p>Condition on the observation times you actually saw, the way regression
+            conditions on its design matrix. The law of the arrival times drops out, and
+            inference becomes exact at every sample size, not just in a limit.</p>
+            <div class="go">See the foundations →</div>
+          </div>
+        </a>
+
       </div>
     </div>
   </section>
 
-  <section id="people">
-    <div class="kicker reveal">People</div>
-    <h2 class="reveal">Who we are</h2>
-    <p class="lede reveal" style="margin-bottom:0;">
-      Black Quantum was founded by
-      <a href="https://yang-azzollini.com"><strong>Yang Azzollini</strong></a>, whose
-      doctoral research at the University of Oxford — supervised by Brian Ripley and
-      Peter Clifford — developed correlation methods for asynchronously observed financial
-      data. The lab continues that programme, carrying estimation theory from its
-      asymptotic foundations through to deployed systems.
-    </p>
-  </section>
-
-  <section id="publications">
-    <div class="kicker reveal">Publications</div>
-    <h2 class="reveal">Selected work</h2>
-    <ul class="pubs">
-      <li class="reveal">
-        <span class="title">Covariance estimation for asynchronous data</span>
-        <span class="venue">Working paper, 2026 (in preparation)</span>
-      </li>
-      <li class="reveal">
-        <span class="title"><a href="https://ora.ox.ac.uk/objects/uuid:e0279f41-c83f-4514-bb69-f49bb4159822">Correlation methods in the statistical analysis of financial trading data</a></span>
-        <span class="venue">DPhil thesis, University of Oxford, 2016 · supervised by Peter Clifford and Brian Ripley</span>
-      </li>
-    </ul>
-  </section>
-
-  <!-- Notes section hidden pending review of the post-mortems.
-       Restore the nav link and remove this comment wrapper to publish. -->
-  <section id="notes" style="display:none">
-    <div class="kicker reveal">Notes</div>
-    <h2 class="reveal">Engineering post-mortems</h2>
-    <p class="lede reveal">
-      Bug write-ups from our own research pipelines. Every quant shop has these;
-      almost nobody publishes them. We think the discovery methods are worth more
-      than the embarrassment.
-    </p>
-    <ul class="pubs">
-      <li class="reveal">
-        <span class="title"><a href="/notes/phantom-size.html">Anatomy of a subtle backtest bug: the phantom size</a></span>
-        <span class="venue">How one ignored field in an order-book reconstruction corrupted every
-        size-based feature we had — while passing every check we thought to run.</span>
-      </li>
-      <li class="reveal">
-        <span class="title"><a href="/notes/lookahead-artifact.html">Anatomy of a look-ahead artifact: the backtest that was three-quarters imaginary</a></span>
-        <span class="venue">A +92 bps/week backtest that fell to an insignificant +23 once two leaks were
-        removed — and lost to the simple baseline it was supposed to beat.</span>
-      </li>
-    </ul>
-  </section>
-
-  <section id="news">
-    <div class="kicker reveal">News</div>
-    <h2 class="reveal">From the field</h2>
-    <ul class="pubs">
-      <li class="reveal">
-        <span class="title">R Core Team awarded the 2026 Rousseeuw Prize for Statistics</span>
-        <span class="venue">June 2026 — The team behind <a href="https://www.r-project.org/">the R Project</a>,
-        including Oxford's Professor Brian Ripley, has been honoured with the $1M Rousseeuw Prize for
-        transforming statistical computing worldwide.
-        <a href="https://www.mpls.ox.ac.uk/latest/news/oxford-statistician-co-awarded-1-million-rousseeuw-prize-for-the-r-project">Read the Oxford announcement →</a></span>
-      </li>
-    </ul>
-  </section>
-
-  <section id="contact">
-    <div class="kicker reveal">Contact</div>
-    <h2 class="reveal">Work with us</h2>
-    <p class="lede reveal">
-      We're interested in collaborations, consulting on high-frequency statistics
-      and neural-network systems, and conversations with people who care about getting the
-      details right.
-    </p>
-    <div class="contact-links reveal">
-      <a href="mailto:yang.azzollini@blackquantumgroup.com">Email</a>
-      <a href="https://yang-azzollini.com">Personal site</a>
-      <a href="https://github.com/ChubbyFaceEuler">GitHub</a>
+  <section class="block" id="domains">
+    <div class="wrap">
+      <div class="kicker reveal">Why it matters</div>
+      <h2 class="section reveal">The same problem, across science</h2>
+      <p class="lede reveal">
+        Asynchronous observation is not a finance quirk. It is the default condition of
+        measurement, and the same broken workaround, force a shared clock and hope, sits
+        at the foundation of field after field.
+      </p>
+      <div class="tile-grid reveal-group">
+        <div class="tile">
+          <span class="field">Climate science</span>
+          <h3>Proxy records</h3>
+          <p>Ice cores, sediments, and tree rings are sampled at irregular depths, and even
+          the timestamps are uncertain. Correlating two proxies is a known minefield.</p>
+          <div class="fails"><b>Today:</b> interpolate onto shared age models; bias compounds with dating error.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Astronomy</span>
+          <h3>Light curves</h3>
+          <p>Reverberation mapping and multiwavelength time-lags need the covariance of two
+          unevenly sampled light curves from telescopes that observe when they can.</p>
+          <div class="fails"><b>Today:</b> interpolated cross-correlation functions, which reintroduce the same bias.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Clinical medicine</span>
+          <h3>Health records</h3>
+          <p>Labs are drawn sporadically, vitals frequently. The coupling between them
+          carries clinical signal, but the sampling is fully asynchronous.</p>
+          <div class="fails"><b>Today:</b> impute-then-model, which sidesteps the dependence structure rather than estimating it.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Digital health</span>
+          <h3>Wearables</h3>
+          <p>Glucose every five minutes, heart rate every second, motion at 50 Hz. The
+          cross-signal coupling is the product, and it is measured off-clock.</p>
+          <div class="fails"><b>Today:</b> resample-and-correlate; "weak, not significant" may be an artifact.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Genomics</span>
+          <h3>Single-cell dynamics</h3>
+          <p>Sequencing destroys the cell, so no cell is seen twice and time itself is
+          reconstructed. Gene-to-gene dynamics live on a latent, asynchronous clock.</p>
+          <div class="fails"><b>Today:</b> ad-hoc pseudotime binning, asynchrony plus an unobserved clock.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Distributed systems</span>
+          <h3>Networked clocks</h3>
+          <p>Packets are timestamped, but every machine keeps its own drifting clock. Here
+          the twist inverts: the clock relationship itself is the unknown to estimate.</p>
+          <div class="fails"><b>Today:</b> NTP breaks on asymmetric paths; the shared clock is provably unrecoverable.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Autonomous driving</span>
+          <h3>Sensor fusion</h3>
+          <p>Camera, LiDAR, and radar each sample the road at their own rate. No two ever
+          capture the same instant, yet fusing them safely means reconciling all three.</p>
+          <div class="fails"><b>Today:</b> interpolate timestamps to force alignment; misalignment surfaces as phantom objects.</div>
+        </div>
+        <div class="tile">
+          <span class="field">Finance</span>
+          <h3>Where it was solved</h3>
+          <p>High-frequency covariance under asynchronous ticks: the problem where the
+          rigorous estimators were first built, and our home ground.</p>
+          <div class="fails"><b>Today:</b> solved rigorously, and so far stranded in this one field.</div>
+        </div>
+      </div>
+      <p class="lede reveal" style="margin-top:40px; margin-bottom:0;">
+        Some of these break new ground even for the finance toolkit: <strong>uncertain
+        observation times</strong> in climate and networked clocks, and a <strong>latent,
+        reconstructed clock</strong> in single-cell genomics. These are not ports of an
+        existing method. They are open problems, and the focus of our work.
+      </p>
     </div>
   </section>
+
+  <section class="block tint" id="demo">
+    <div class="wrap">
+      <div class="kicker reveal">See it fail</div>
+      <h2 class="section reveal">The Epps effect, on real trades</h2>
+      <p class="lede reveal">
+        WTI and Brent crude futures move together, their correlation at 5-minute sampling
+        is about 0.87. Sample the same trades every two seconds instead and the estimate
+        drops to 0.37. Nothing about the market changed. Only the clock did.
+      </p>
+      <div class="figure-card reveal">
+        <div class="fig-title">Measured correlation vs sampling interval</div>
+        <div class="fig-sub">WTI (CL) and Brent (BZ) front-contract trades, CME Globex, 2026-05-15, previous-tick sampling</div>
+        <canvas id="teaser" style="width:100%; height:240px; display:block; margin-top:18px;"></canvas>
+        <div class="fig-note">
+          The full interactive version, with a slider, the raw price paths, and a simulated
+          pair where the truth is known exactly, lives on the
+          <a href="/problems/futures.html">futures problem page</a>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="approach">
+    <div class="wrap">
+      <div class="kicker reveal">Approach</div>
+      <h2 class="section reveal">How we do research</h2>
+      <div class="principles">
+        <div class="principle reveal">
+          <h3>Theory first</h3>
+          <p>Estimators come with proofs, not just backtests. If we can't state the
+          assumptions, we don't trust the result.</p>
+        </div>
+        <div class="principle reveal">
+          <h3>Adversarial evaluation</h3>
+          <p>Every positive result is treated as a bug until it survives walk-forward
+          testing, leakage audits, and independent replication.</p>
+        </div>
+        <div class="principle reveal">
+          <h3>Theory to deployment</h3>
+          <p>Research isn't finished at the paper. We carry methods through simulation,
+          real data, and production infrastructure.</p>
+        </div>
+        <div class="principle reveal">
+          <h3>Formal verification</h3>
+          <p>Where the mathematics matters most, we machine-check it, bringing proof
+          assistants such as <a href="https://lean-lang.org/">Lean</a> into
+          quantitative finance.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block tint" id="people">
+    <div class="wrap">
+      <div class="kicker reveal">People</div>
+      <h2 class="section reveal">Who we are</h2>
+      <p class="lede reveal" style="margin-bottom:0;">
+        Black Quantum was founded by
+        <a href="https://yang-azzollini.com"><strong>Yang Azzollini</strong></a>, whose
+        doctoral research at the University of Oxford, supervised by Brian Ripley and
+        Peter Clifford, developed correlation methods for asynchronously observed
+        financial data. The lab continues that programme, carrying estimation theory from
+        its foundations through to deployed systems.
+      </p>
+    </div>
+  </section>
+
+  <section class="block" id="publications">
+    <div class="wrap">
+      <div class="kicker reveal">Publications</div>
+      <h2 class="section reveal">Selected work</h2>
+      <ul class="pubs">
+        <li class="reveal">
+          <span class="title">Covariance estimation for asynchronous data</span>
+          <span class="venue">Working paper, 2026 (in preparation)</span>
+        </li>
+        <li class="reveal">
+          <span class="title"><a href="https://ora.ox.ac.uk/objects/uuid:e0279f41-c83f-4514-bb69-f49bb4159822">Correlation methods in the statistical analysis of financial trading data</a></span>
+          <span class="venue">DPhil thesis, University of Oxford, 2016 · supervised by Peter Clifford and Brian Ripley</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block tint" id="news">
+    <div class="wrap">
+      <div class="kicker reveal">News</div>
+      <h2 class="section reveal">From the field</h2>
+      <ul class="pubs">
+        <li class="reveal">
+          <span class="title">R Core Team awarded the 2026 Rousseeuw Prize for Statistics</span>
+          <span class="venue">June 2026 · The team behind <a href="https://www.r-project.org/">the R Project</a>,
+          including Oxford's Professor Brian Ripley, has been honoured with the $1M Rousseeuw Prize for
+          transforming statistical computing worldwide.
+          <a href="https://www.mpls.ox.ac.uk/latest/news/oxford-statistician-co-awarded-1-million-rousseeuw-prize-for-the-r-project">Read the Oxford announcement →</a></span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block" id="contact">
+    <div class="wrap">
+      <div class="kicker reveal">Contact</div>
+      <h2 class="section reveal">Work with us</h2>
+      <p class="lede reveal">
+        We're interested in collaborations, consulting on high-frequency statistics and
+        neural-network systems, and conversations with people who care about getting the
+        details right.
+      </p>
+      <div class="contact-links reveal">
+        <a href="mailto:yang.azzollini@blackquantumgroup.com">Email</a>
+        <a href="https://yang-azzollini.com">Personal site</a>
+        <a href="https://github.com/ChubbyFaceEuler">GitHub</a>
+      </div>
+    </div>
+  </section>
+
 </main>
 
-<footer>
-  &copy; 2026 Black Quantum. All rights reserved.
+<footer class="site">
+  <div class="wrap">
+    <span>&copy; 2026 Black Quantum. All rights reserved.</span>
+    <span>Statistics for asynchronous time series.</span>
+  </div>
 </footer>
-
-<script>
-(function () {
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---- scroll reveal ---- */
-  var revealEls = document.querySelectorAll('.reveal, .reveal-group');
-  if (reduced) {
-    revealEls.forEach(function (el) { el.classList.add('in'); });
-  } else {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.15 });
-    revealEls.forEach(function (el) { io.observe(el); });
-  }
-
-  /* ---- particle network in hero ---- */
-  if (reduced) return;
-  var canvas = document.getElementById('field');
-  var ctx = canvas.getContext('2d');
-  var wrap = canvas.parentElement;
-  var W, H, dpr, nodes = [];
-  var mouse = { x: -9999, y: -9999 };
-
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = wrap.clientWidth; H = wrap.clientHeight;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var target = Math.min(90, Math.floor(W * H / 16000));
-    while (nodes.length < target) nodes.push(makeNode());
-    nodes.length = target;
-  }
-
-  function makeNode() {
-    return {
-      x: Math.random() * W, y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r: 1 + Math.random() * 1.6
-    };
-  }
-
-  wrap.addEventListener('mousemove', function (e) {
-    var b = wrap.getBoundingClientRect();
-    mouse.x = e.clientX - b.left; mouse.y = e.clientY - b.top;
-  });
-  wrap.addEventListener('mouseleave', function () { mouse.x = -9999; mouse.y = -9999; });
-
-  var LINK = 130;
-  function step() {
-    ctx.clearRect(0, 0, W, H);
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i];
-      n.x += n.vx; n.y += n.vy;
-      if (n.x < -10) n.x = W + 10; else if (n.x > W + 10) n.x = -10;
-      if (n.y < -10) n.y = H + 10; else if (n.y > H + 10) n.y = -10;
-
-      /* gentle attraction toward mouse */
-      var mdx = mouse.x - n.x, mdy = mouse.y - n.y;
-      var md2 = mdx * mdx + mdy * mdy;
-      if (md2 < 40000 && md2 > 1) {
-        n.x += mdx * 0.002; n.y += mdy * 0.002;
-      }
-    }
-    ctx.lineWidth = 1;
-    for (var a = 0; a < nodes.length; a++) {
-      for (var b = a + 1; b < nodes.length; b++) {
-        var dx = nodes[a].x - nodes[b].x, dy = nodes[a].y - nodes[b].y;
-        var d2 = dx * dx + dy * dy;
-        if (d2 < LINK * LINK) {
-          var t = 1 - Math.sqrt(d2) / LINK;
-          ctx.strokeStyle = 'rgba(167,139,250,' + (0.16 * t).toFixed(3) + ')';
-          ctx.beginPath();
-          ctx.moveTo(nodes[a].x, nodes[a].y);
-          ctx.lineTo(nodes[b].x, nodes[b].y);
-          ctx.stroke();
-        }
-      }
-    }
-    for (var j = 0; j < nodes.length; j++) {
-      var p = nodes[j];
-      ctx.fillStyle = 'rgba(196,181,253,0.55)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    requestAnimationFrame(step);
-  }
-
-  resize();
-  window.addEventListener('resize', resize);
-  requestAnimationFrame(step);
-})();
-</script>
 
 <script src="/epps-data.js"></script>
 <script>
 (function () {
-  var canvas = document.getElementById('epps');
-  if (!canvas || !canvas.getContext) return;
+  /* nav border on scroll */
+  var nav = document.getElementById('topnav');
+  addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', scrollY > 8);
+  }, { passive: true });
+
+  /* scroll reveal */
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.reveal, .reveal-group');
+  if (reduced) { els.forEach(function (el) { el.classList.add('in'); }); }
+  else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  /* static teaser: real Epps curve */
+  var canvas = document.getElementById('teaser');
+  if (!canvas || !canvas.getContext || typeof REAL_EPPS_DATA === 'undefined') return;
   var ctx = canvas.getContext('2d');
-  var slider = document.getElementById('eppsH');
-  var resim = document.getElementById('eppsResim');
-  var stat = document.getElementById('eppsStat');
-  var btnReal = document.getElementById('eppsModeReal');
-  var btnSim = document.getElementById('eppsModeSim');
+  var R = REAL_EPPS_DATA;
+  var H_MIN = R.hs[0], H_MAX = R.hs[R.hs.length - 1];
 
-  /* Real data: CL (WTI) and BZ (Brent) front-contract trades, CME Globex,
-     2026-05-15 13:00-20:00 UTC, from Databento MBO. Curve precomputed offline
-     with the same previous-tick estimator used in the simulation. Paths are
-     log prices sampled every 30s. */
-  var REAL = REAL_EPPS_DATA;
-
-  var mode = 'real';
-
-  function corrReal(h) {
-    var xs = REAL.hs, cs = REAL.corr, lh = Math.log(h);
-    if (h <= xs[0]) return cs[0];
-    for (var i = 1; i < xs.length; i++) {
-      if (h <= xs[i]) {
-        var t = (lh - Math.log(xs[i - 1])) / (Math.log(xs[i]) - Math.log(xs[i - 1]));
-        return cs[i - 1] + (cs[i] - cs[i - 1]) * t;
-      }
-    }
-    return cs[cs.length - 1];
-  }
-
-  function setMode(m) {
-    mode = m;
-    var on = function (b) { b.style.borderColor = 'var(--accent-dim)'; b.style.color = 'var(--text)'; };
-    var off = function (b) { b.style.borderColor = 'var(--border)'; b.style.color = 'var(--muted)'; };
-    if (m === 'real') { on(btnReal); off(btnSim); resim.style.display = 'none'; }
-    else { on(btnSim); off(btnReal); resim.style.display = ''; }
-    draw();
-  }
-  btnReal.addEventListener('click', function () { setMode('real'); });
-  btnSim.addEventListener('click', function () { setMode('sim'); });
-
-  var T = 23400;            /* seconds in one trading session */
-  var RHO = 0.8;            /* true correlation of the driving noise */
-  var H_MIN = 2, H_MAX = 300;
-  var path1, path2, obs1, obs2, curveH = [], curveC = [];
-
-  function randn() {
-    var u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
-
-  function observe(meanGap) {
-    var ts = [0], t = 0;
-    for (;;) {
-      t += -Math.log(Math.random()) * meanGap;
-      if (t >= T) break;
-      ts.push(Math.floor(t));
-    }
-    return ts;
-  }
-
-  function simulate() {
-    path1 = new Float64Array(T + 1);
-    path2 = new Float64Array(T + 1);
-    for (var i = 0; i < T; i++) {
-      var z1 = randn(), z2 = RHO * z1 + Math.sqrt(1 - RHO * RHO) * randn();
-      path1[i + 1] = path1[i] + z1;
-      path2[i + 1] = path2[i] + z2;
-    }
-    obs1 = observe(5);   /* asset 1 trades every ~5s */
-    obs2 = observe(7);   /* asset 2 trades every ~7s */
-    curveH = []; curveC = [];
-    for (var k = 0; k < 40; k++) {
-      var h = Math.exp(Math.log(H_MIN) + (k / 39) * (Math.log(H_MAX) - Math.log(H_MIN)));
-      curveH.push(h);
-      curveC.push(corrAt(h));
-    }
-  }
-
-  function prevTick(obs, path, h) {
-    var out = [], j = 0;
-    for (var t = 0; t <= T; t += h) {
-      while (j + 1 < obs.length && obs[j + 1] <= t) j++;
-      out.push(path[obs[j]]);
-    }
-    return out;
-  }
-
-  function corrAt(h) {
-    var s1 = prevTick(obs1, path1, h), s2 = prevTick(obs2, path2, h);
-    var n = s1.length - 1;
-    if (n < 3) return NaN;
-    var m1 = 0, m2 = 0, r1 = [], r2 = [];
-    for (var k = 1; k <= n; k++) {
-      var a = s1[k] - s1[k - 1], b = s2[k] - s2[k - 1];
-      r1.push(a); r2.push(b); m1 += a; m2 += b;
-    }
-    m1 /= n; m2 /= n;
-    var c = 0, v1 = 0, v2 = 0;
-    for (var q = 0; q < n; q++) {
-      c += (r1[q] - m1) * (r2[q] - m2);
-      v1 += (r1[q] - m1) * (r1[q] - m1);
-      v2 += (r2[q] - m2) * (r2[q] - m2);
-    }
-    return c / Math.sqrt(v1 * v2);
-  }
-
-  function sliderH() {
-    var v = parseFloat(slider.value);
-    return Math.exp(Math.log(H_MIN) + v * (Math.log(H_MAX) - Math.log(H_MIN)));
-  }
-
-  function xOf(h, x0, x1) {
-    return x0 + (Math.log(h) - Math.log(H_MIN)) / (Math.log(H_MAX) - Math.log(H_MIN)) * (x1 - x0);
-  }
-
-  function fmtH(h) {
-    return h < 60 ? Math.round(h) + 's' : (h / 60).toFixed(1).replace(/\.0$/, '') + 'm';
-  }
+  function fmtH(h) { return h < 60 ? Math.round(h) + 's' : (h / 60).toFixed(1).replace(/\.0$/, '') + 'm'; }
 
   function draw() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var dpr = Math.min(devicePixelRatio || 1, 2);
     var W = canvas.clientWidth, H = canvas.clientHeight;
-    if (W < 10 || H < 10) return;   /* not laid out yet — ResizeObserver will call back */
+    if (W < 10) return;
     canvas.width = W * dpr; canvas.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
 
-    /* --- price paths strip --- */
-    var stripH = 80;
-    var seriesData;
-    if (mode === 'real') {
-      seriesData = [[REAL.path1, 'rgba(196,181,253,0.9)'], [REAL.path2, 'rgba(109,91,184,0.9)']];
-    } else {
-      var a1 = [], a2 = [];
-      for (var ti = 0; ti <= T; ti += 20) { a1.push(path1[ti]); a2.push(path2[ti]); }
-      seriesData = [[a1, 'rgba(196,181,253,0.9)'], [a2, 'rgba(109,91,184,0.9)']];
-    }
-    for (var s = 0; s < 2; s++) {
-      var p = seriesData[s][0], mn = Infinity, mx = -Infinity;
-      for (var i = 0; i < p.length; i++) {
-        if (p[i] == null) continue;
-        if (p[i] < mn) mn = p[i]; if (p[i] > mx) mx = p[i];
-      }
-      ctx.strokeStyle = seriesData[s][1];
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      var started = false;
-      for (var k2 = 0; k2 < p.length; k2++) {
-        if (p[k2] == null) continue;
-        var x = k2 / (p.length - 1) * W;
-        var y = 8 + (1 - (p[k2] - mn) / (mx - mn || 1)) * (stripH - 16);
-        started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        started = true;
-      }
-      ctx.stroke();
-    }
-    ctx.fillStyle = 'rgba(139,139,150,0.8)';
-    ctx.font = '11px ui-monospace, Menlo, monospace';
-    ctx.fillText(mode === 'real'
-      ? 'WTI (CL, light) vs Brent (BZ, dark) — CME trades, ' + REAL.date + ', 13:00–20:00 UTC'
-      : 'two simulated correlated price paths, one trading day', 4, 12);
-
-    /* --- correlation vs sampling-interval plot --- */
-    var px0 = 44, px1 = W - 12, py0 = stripH + 26, py1 = H - 24;
+    var px0 = 40, px1 = W - 14, py0 = 16, py1 = H - 28;
+    var xOf = function (h) { return px0 + (Math.log(h) - Math.log(H_MIN)) / (Math.log(H_MAX) - Math.log(H_MIN)) * (px1 - px0); };
     var yOf = function (c) { return py1 - (c + 0.1) / 1.1 * (py1 - py0); };
 
-    ctx.strokeStyle = 'rgba(30,30,38,1)';
+    ctx.font = '11px ui-monospace, Menlo, monospace';
+    ctx.fillStyle = '#9aa0a6';
+    ctx.strokeStyle = '#eceef0';
     ctx.lineWidth = 1;
-    var yticks = [0, 0.4, 0.8];
-    ctx.fillStyle = 'rgba(139,139,150,0.8)';
-    for (var yt = 0; yt < yticks.length; yt++) {
-      var yy = yOf(yticks[yt]);
-      ctx.beginPath(); ctx.moveTo(px0, yy); ctx.lineTo(px1, yy); ctx.stroke();
-      ctx.fillText(yticks[yt].toFixed(1), 16, yy + 4);
-    }
-    var xticks = [2, 5, 15, 60, 300];
-    for (var xt = 0; xt < xticks.length; xt++) {
-      var xx = xOf(xticks[xt], px0, px1);
-      ctx.fillText(fmtH(xticks[xt]), xx - 8, H - 8);
-    }
+    [0, 0.4, 0.8].forEach(function (t) {
+      var y = yOf(t);
+      ctx.beginPath(); ctx.moveTo(px0, y); ctx.lineTo(px1, y); ctx.stroke();
+      ctx.fillText(t.toFixed(1), 12, y + 4);
+    });
+    [2, 5, 15, 60, 300].forEach(function (h) {
+      ctx.fillText(fmtH(h), xOf(h) - 8, H - 8);
+    });
 
-    /* reference line */
-    var refC = mode === 'real' ? REAL.refCorr : RHO;
-    var refLabel = mode === 'real'
-      ? '5-min corr ≈ ' + REAL.refCorr.toFixed(2)
-      : 'true ρ = 0.80';
-    var yr = yOf(refC);
-    ctx.strokeStyle = 'rgba(196,181,253,0.5)';
+    var yr = yOf(R.refCorr);
+    ctx.strokeStyle = '#bdc1c6';
     ctx.setLineDash([5, 5]);
     ctx.beginPath(); ctx.moveTo(px0, yr); ctx.lineTo(px1, yr); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(196,181,253,0.8)';
-    ctx.fillText(refLabel, px1 - 110, yr - 6);
+    ctx.fillStyle = '#5f6368';
+    ctx.fillText('5-min corr = ' + R.refCorr.toFixed(2), px1 - 130, yr - 6);
 
-    /* estimated curve */
-    var cH = mode === 'real' ? REAL.hs : curveH;
-    var cC = mode === 'real' ? REAL.corr : curveC;
-    ctx.strokeStyle = '#a78bfa';
+    ctx.strokeStyle = '#0b57d0';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    var cStarted = false;
-    for (var k = 0; k < cH.length; k++) {
-      if (cC[k] == null || isNaN(cC[k])) continue;
-      var cx = xOf(cH[k], px0, px1), cy = yOf(cC[k]);
-      cStarted ? ctx.lineTo(cx, cy) : ctx.moveTo(cx, cy);
-      cStarted = true;
+    var started = false;
+    for (var k = 0; k < R.hs.length; k++) {
+      if (R.corr[k] == null || isNaN(R.corr[k])) continue;
+      var x = xOf(R.hs[k]), y = yOf(R.corr[k]);
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      started = true;
     }
     ctx.stroke();
-
-    /* current-h marker */
-    var h = sliderH();
-    var ch = mode === 'real' ? corrReal(h) : corrAt(h);
-    var mx2 = xOf(h, px0, px1), my2 = yOf(ch);
-    ctx.strokeStyle = 'rgba(167,139,250,0.35)';
-    ctx.beginPath(); ctx.moveTo(mx2, py0); ctx.lineTo(mx2, py1); ctx.stroke();
-    ctx.fillStyle = '#c4b5fd';
-    ctx.beginPath(); ctx.arc(mx2, my2, 5, 0, Math.PI * 2); ctx.fill();
-
-    stat.textContent = mode === 'real'
-      ? 'sampling every ' + fmtH(h) + '  →  ρ̂ = ' + (ch == null || isNaN(ch) ? '—' : ch.toFixed(2)) +
-        '   (CL: ' + REAL.n1.toLocaleString() + ' trades, median gap ' + REAL.gap1 + 's · BZ: ' +
-        REAL.n2.toLocaleString() + ' trades, gap ' + REAL.gap2 + 's · previous-tick)'
-      : 'sampling every ' + fmtH(h) +
-        '  →  ρ̂ = ' + (isNaN(ch) ? '—' : ch.toFixed(2)) +
-        '   (true ρ = 0.80 · asset 1 trades ~5s, asset 2 ~7s · previous-tick sampling)';
   }
 
-  simulate();
-  setMode('real');
-  slider.addEventListener('input', draw);
-  resim.addEventListener('click', function () { simulate(); draw(); });
-  window.addEventListener('resize', draw);
-  if (typeof ResizeObserver !== 'undefined') {
-    new ResizeObserver(draw).observe(canvas);
-  }
+  draw();
+  addEventListener('resize', draw);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(draw).observe(canvas);
 })();
 </script>
 
