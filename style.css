@@ -1,20 +1,21 @@
-/* Black Quantum — site design system (light, editorial) */
+/* Black Quantum — site design system (dark, editorial) */
 
 :root {
-  --bg: #ffffff;
-  --bg-soft: #f6f8fa;
-  --bg-tint: #eef4fe;
-  --ink: #171a1f;
-  --ink-2: #3c4043;
-  --muted: #5f6368;
-  --faint: #9aa0a6;
-  --line: #e6e8eb;
-  --blue: #0b57d0;
-  --blue-bright: #1a73e8;
-  --blue-soft: #d3e3fd;
-  --orange: #e8710a;
-  --grad-hero: radial-gradient(1200px 600px at 85% -10%, #d3e3fd 0%, rgba(211,227,253,0) 60%),
-               radial-gradient(900px 500px at -10% 110%, #e7f0fe 0%, rgba(231,240,254,0) 55%);
+  --bg: #000000;
+  --bg-soft: #0b0d10;
+  --bg-tint: #101a2b;
+  --surface: #0e1115;
+  --ink: #f3f5f8;
+  --ink-2: #c4cad2;
+  --muted: #99a1ac;
+  --faint: #6d7480;
+  --line: #23272e;
+  --blue: #8ab4f8;
+  --blue-bright: #a8c7fa;
+  --blue-soft: #1b2b47;
+  --orange: #f2a15c;
+  --grad-hero: radial-gradient(1200px 620px at 84% -12%, #12305c 0%, rgba(18,48,92,0) 62%),
+               radial-gradient(900px 520px at -8% 108%, #0f2444 0%, rgba(15,36,68,0) 58%);
   --max: 1200px;
   --radius: 20px;
   font-size: 17px;
@@ -32,14 +33,14 @@ body {
 }
 a { color: var(--blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
-::selection { background: var(--blue-soft); }
+::selection { background: var(--blue-soft); color: var(--ink); }
 
 .wrap { max-width: var(--max); margin: 0 auto; padding: 0 32px; }
 
 /* ---------- nav ---------- */
 nav.site {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(255,255,255,0.82);
+  background: rgba(0,0,0,0.72);
   backdrop-filter: saturate(1.4) blur(14px);
   -webkit-backdrop-filter: saturate(1.4) blur(14px);
   border-bottom: 1px solid transparent;
@@ -97,16 +98,16 @@ header.hero {
 }
 header.hero .blob {
   position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none;
-  opacity: 0.55; z-index: 0;
+  opacity: 0.75; z-index: 0;
 }
 header.hero .blob.b1 {
   width: 520px; height: 520px; right: -120px; top: -160px;
-  background: radial-gradient(circle at 35% 35%, #7cacf8, #d3e3fd 70%);
+  background: radial-gradient(circle at 35% 35%, #1d4a8f, #0a1e3a 70%);
   animation: drift1 26s ease-in-out infinite alternate;
 }
 header.hero .blob.b2 {
   width: 420px; height: 420px; right: 260px; top: 120px;
-  background: radial-gradient(circle at 60% 40%, #a8c7fa, #e7f0fe 70%);
+  background: radial-gradient(circle at 60% 40%, #163a70, #08182e 70%);
   animation: drift2 32s ease-in-out infinite alternate;
 }
 header.hero .wrap { position: relative; z-index: 1; }
@@ -127,9 +128,9 @@ header.hero .sub {
   font-size: 0.98rem; font-weight: 560; transition: all .18s ease;
 }
 .btn:hover { text-decoration: none; }
-.btn.primary { background: var(--ink); color: #fff; }
-.btn.primary:hover { background: var(--blue); }
-.btn.ghost { border: 1px solid var(--line); color: var(--ink); background: #fff; }
+.btn.primary { background: var(--ink); color: #000; }
+.btn.primary:hover { background: var(--blue-bright); color: #06121f; }
+.btn.ghost { border: 1px solid var(--line); color: var(--ink); background: transparent; }
 .btn.ghost:hover { border-color: var(--blue); color: var(--blue); }
 .hero-figure { margin-top: 72px; }
 .hero-figure svg { width: 100%; height: auto; display: block; }
@@ -152,12 +153,12 @@ header.hero .sub {
 a.problem-card {
   display: flex; flex-direction: column;
   border: 1px solid var(--line); border-radius: var(--radius);
-  overflow: hidden; background: #fff; color: var(--ink);
+  overflow: hidden; background: var(--surface); color: var(--ink);
   transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
 }
 a.problem-card:hover {
   text-decoration: none;
-  box-shadow: 0 18px 44px rgba(23,26,31,0.10);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.55);
   transform: translateY(-3px);
   border-color: transparent;
 }
@@ -179,7 +180,7 @@ a.problem-card:hover {
   gap: 18px; margin-top: 52px;
 }
 .tile {
-  border: 1px solid var(--line); border-radius: 16px; background: #fff;
+  border: 1px solid var(--line); border-radius: 16px; background: var(--surface);
   padding: 22px 22px 24px;
 }
 .tile .spot { height: 62px; margin-bottom: 14px; }
@@ -195,14 +196,14 @@ a.problem-card:hover {
 /* ---------- figure card (charts) ---------- */
 .figure-card {
   border: 1px solid var(--line); border-radius: var(--radius);
-  background: #fff; padding: 28px; margin-top: 48px;
-  box-shadow: 0 10px 34px rgba(23,26,31,0.05);
+  background: var(--surface); padding: 28px; margin-top: 48px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.5);
 }
 .figure-card .fig-title { font-weight: 600; font-size: 1.02rem; letter-spacing: -0.01em; }
 .figure-card .fig-sub { color: var(--muted); font-size: 0.9rem; margin-top: 3px; }
 .chip-row { display: flex; gap: 8px; margin: 18px 0 14px; flex-wrap: wrap; }
 button.chip {
-  background: #fff; border: 1px solid var(--line); color: var(--muted);
+  background: transparent; border: 1px solid var(--line); color: var(--muted);
   border-radius: 999px; padding: 7px 16px; font-size: 0.88rem; font-weight: 550;
   cursor: pointer; font-family: inherit; transition: all .15s ease;
 }
@@ -279,8 +280,8 @@ footer.site .wrap { display: flex; justify-content: space-between; gap: 20px; fl
 /* ---------- diagrams (problem pages) ---------- */
 figure.diagram {
   margin: 44px 0; border: 1px solid var(--line); border-radius: var(--radius);
-  background: #fff; padding: 26px 26px 20px;
-  box-shadow: 0 8px 26px rgba(23,26,31,0.04);
+  background: var(--surface); padding: 26px 26px 20px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.45);
 }
 figure.diagram svg { width: 100%; height: auto; display: block; }
 figure.diagram figcaption {
@@ -300,7 +301,7 @@ figure.diagram figcaption {
   background: linear-gradient(178deg, #fdfdfc 0%, #f4f3ef 49.6%, #e9e7e1 50.4%, #fbfaf8 100%);
   border-radius: 6px; padding: 34px 36px 30px;
   transform: rotate(-6deg);
-  box-shadow: 0 26px 60px rgba(23,26,31,0.22), 0 4px 14px rgba(23,26,31,0.10);
+  box-shadow: 0 26px 60px rgba(0,0,0,0.75), 0 4px 14px rgba(0,0,0,0.5);
 }
 .paper-card .ptitle {
   font-family: Georgia, "Times New Roman", serif;
@@ -327,7 +328,7 @@ figure.diagram figcaption {
 .paper-scene .mini-chart {
   position: absolute; right: -2%; bottom: 0; width: 38%;
   background: #0f2350; border-radius: 14px; padding: 16px;
-  box-shadow: 0 18px 44px rgba(23,26,31,0.25);
+  box-shadow: 0 18px 44px rgba(0,0,0,0.6);
 }
 .paper-scene .mini-chart svg { width: 100%; height: auto; display: block; }
 
@@ -342,7 +343,7 @@ figure.diagram figcaption {
 .era::before {
   content: ""; position: absolute; left: 0; top: 6px;
   width: 16px; height: 16px; border-radius: 50%;
-  background: #fff; border: 3px solid var(--blue);
+  background: var(--bg); border: 3px solid var(--blue);
 }
 .era .when {
   font-size: 0.8rem; font-weight: 650; letter-spacing: 0.12em;
@@ -355,7 +356,7 @@ figure.diagram figcaption {
 .era p { color: var(--ink-2); font-size: 1.05rem; line-height: 1.7; max-width: 62ch; margin-top: 12px; }
 .era .vignette {
   margin: 22px 0 4px; border: 1px solid var(--line); border-radius: 14px;
-  background: var(--bg-soft); padding: 18px; max-width: 560px;
+  background: var(--surface); padding: 18px; max-width: 560px;
 }
 .era .vignette svg { width: 100%; height: auto; display: block; }
 

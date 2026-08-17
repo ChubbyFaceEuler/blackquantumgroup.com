@@ -21,8 +21,8 @@
 
     var LINK = 132;        /* node-to-node link distance */
     var REACH = 190;       /* pointer link distance */
-    var NODE_RGB = '11,87,208';
-    var LINE_RGB = '26,115,232';
+    var NODE_RGB = '198,219,255';
+    var LINE_RGB = '138,180,248';
 
     function makeNode() {
       return {
@@ -30,7 +30,7 @@
         y: Math.random() * H,
         vx: (Math.random() - 0.5) * 0.30,
         vy: (Math.random() - 0.5) * 0.30,
-        r: 1.1 + Math.random() * 1.7
+        r: 1.7 + Math.random() * 2.3
       };
     }
 
@@ -39,7 +39,7 @@
     function spawnHub(x, y) {
       /* a node exactly under the cursor, plus a ring of neighbours close
          enough to link to it: one click, one well-connected hub */
-      nodes.push({ x: x, y: y, vx: (Math.random() - 0.5) * 0.12, vy: (Math.random() - 0.5) * 0.12, r: 2.6 });
+      nodes.push({ x: x, y: y, vx: (Math.random() - 0.5) * 0.12, vy: (Math.random() - 0.5) * 0.12, r: 3.8 });
       for (var i = 0; i < 7; i++) {
         var a = (Math.PI * 2 * i) / 7 + Math.random() * 0.5;
         var d = 34 + Math.random() * 52;
@@ -48,7 +48,7 @@
           y: y + Math.sin(a) * d,
           vx: (Math.random() - 0.5) * 0.28,
           vy: (Math.random() - 0.5) * 0.28,
-          r: 1.1 + Math.random() * 1.7
+          r: 1.7 + Math.random() * 2.3
         });
       }
       var cap = baseCount + 96;
@@ -100,7 +100,7 @@
           var d2 = dx * dx + dy * dy;
           if (d2 < LINK * LINK) {
             var t = 1 - Math.sqrt(d2) / LINK;
-            ctx.strokeStyle = 'rgba(' + LINE_RGB + ',' + (0.20 * t).toFixed(3) + ')';
+            ctx.strokeStyle = 'rgba(' + LINE_RGB + ',' + (0.26 * t).toFixed(3) + ')';
             ctx.beginPath();
             ctx.moveTo(nodes[a].x, nodes[a].y);
             ctx.lineTo(nodes[b].x, nodes[b].y);
@@ -115,7 +115,7 @@
           var pd2 = px * px + py * py;
           if (pd2 < REACH * REACH) {
             var pt = 1 - Math.sqrt(pd2) / REACH;
-            ctx.strokeStyle = 'rgba(' + LINE_RGB + ',' + (0.42 * pt).toFixed(3) + ')';
+            ctx.strokeStyle = 'rgba(' + LINE_RGB + ',' + (0.52 * pt).toFixed(3) + ')';
             ctx.lineWidth = 1.15;
             ctx.beginPath();
             ctx.moveTo(pointer.x, pointer.y);
@@ -128,7 +128,7 @@
 
       for (var j = 0; j < nodes.length; j++) {
         var n = nodes[j];
-        ctx.fillStyle = 'rgba(' + NODE_RGB + ',0.42)';
+        ctx.fillStyle = 'rgba(' + NODE_RGB + ',0.72)';
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fill();
