@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of a subtle backtest bug — Black Quantum</title>
+<meta name="description" content="How an order-book reconstruction bug corrupted every size-based feature while passing every check we thought to run.">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-soft: #0a0a0c;
+    --text: #ededf0;
+    --muted: #8b8b96;
+    --accent: #a78bfa;
+    --accent-dim: #6d5bb8;
+    --border: #1e1e26;
+    --max: 720px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.75; font-size: 17.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--accent-dim); color: #fff; }
+
+  nav {
+    position: sticky; top: 0;
+    background: rgba(0,0,0,0.78); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border); z-index: 10;
+  }
+  .nav-inner {
+    max-width: var(--max); margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px; font-size: 14.5px;
+  }
+  .nav-inner .brand { font-weight: 650; color: var(--text); letter-spacing: 0.02em; }
+
+  article { max-width: var(--max); margin: 0 auto; padding: 72px 28px 96px; }
+  .kicker {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--accent); font-weight: 600; margin-bottom: 16px;
+  }
+  h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+  .byline { color: var(--muted); font-size: 14.5px; margin-bottom: 44px; }
+  h2 { font-size: 1.35rem; font-weight: 650; letter-spacing: -0.01em; margin: 44px 0 14px; }
+  p { margin-bottom: 18px; }
+  p.muted { color: var(--muted); }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.88em; background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+  }
+  blockquote {
+    border-left: 2px solid var(--accent-dim);
+    padding: 4px 0 4px 20px; margin: 24px 0;
+    color: var(--muted); font-style: italic;
+  }
+  table {
+    width: 100%; border-collapse: collapse; margin: 24px 0;
+    font-size: 15px;
+  }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+  td code { background: none; border: none; padding: 0; }
+  .callout {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 26px; margin: 28px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 28px; text-align: center;
+    color: var(--muted); font-size: 13.5px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="/">BLACK QUANTUM</a>
+    <a href="/#notes">← All notes</a>
+  </div>
+</nav>
+
+<article>
+  <div class="kicker">Notes · Adversarial evaluation</div>
+  <h1>Anatomy of a subtle backtest bug: the phantom size</h1>
+  <p class="byline">How one ignored field in an order-book reconstruction corrupted every size-based feature we had — while passing every check we thought to run. Published July 2026.</p>
+
+  <p>
+    Everyone who builds trading research infrastructure has a story like this one.
+    Almost nobody publishes theirs. We think that's backwards: the bug is the least
+    proprietary thing a quant lab owns, and the discovery method is the most useful
+    thing it can share.
+  </p>
+
+  <h2>The setup</h2>
+  <p>
+    We reconstruct limit order books for CME futures from raw market-by-order (MBO)
+    data — every add, cancel, modify, and fill, replayed in sequence to recover the
+    book state at any instant. From the reconstructed book we compute microstructure
+    features: top-of-book imbalance, depth-weighted imbalances, order-flow imbalance,
+    and so on. Standard pipeline, hundreds of files, nothing exotic.
+  </p>
+
+  <h2>The bug</h2>
+  <p>
+    In MBO semantics, a <code>Modify</code> event can change an order's price, its
+    size, or both. Our <code>Book.modify()</code> handled the size — and silently
+    ignored the new price. Modified orders stayed parked at their old price level
+    with stale size, forever.
+  </p>
+  <p>
+    How bad is that in practice? It depends on how often modifies move price. We
+    measured it: <strong>79%</strong> of modifies on ZN (10-year Treasury futures)
+    change price. On ES (S&amp;P 500), <strong>89%</strong>. On GC (gold),
+    <strong>99%</strong>. This was not a corner case. It was the main case.
+  </p>
+
+  <h2>Why every check passed</h2>
+  <p>
+    Here is the part worth publishing. The pipeline had been audited and marked
+    <em>verified correct</em>. The audit checked spread, mid-price, forward-return
+    recomputation, event ordering (no look-ahead), and that the level-1 imbalance
+    lay in [−1, 1]. Every check passed.
+  </p>
+  <p>
+    They passed because of a helper called <code>best_uncrossed()</code>, which
+    walks past crossed price levels to find a sane top of book. Orders stranded at
+    stale prices frequently crossed the book, and <code>best_uncrossed()</code>
+    dutifully skipped over them — recovering the correct <em>prices</em> while
+    leaving phantom <em>size</em> sitting at the top of the book. Every price-based
+    quantity looked clean. Every size-based quantity was quietly wrong.
+  </p>
+  <div class="callout">
+    <p>
+      The range check deserves its own sentence: confirming a feature lies in
+      [−1, 1] confirms it is <em>well-formed</em>, never that it is
+      <em>correct</em>. A plausible-looking number is the most dangerous kind of
+      wrong.
+    </p>
+  </div>
+  <p>
+    The measured damage on ZN: our stored level-1 imbalance correlated
+    <strong>0.52</strong> with the true value and carried the wrong sign
+    <strong>19%</strong> of the time. Six features were corrupted — every
+    size-based feature in the panel. Mid-price, spreads, and all forward returns
+    were untouched, which is precisely why the damage was invisible to a
+    price-oriented audit.
+  </p>
+
+  <h2>How it was actually caught</h2>
+  <p>
+    Not by staring harder at the code. It was caught by a <em>results-blind
+    reimplementation</em>: a separate session reimplemented the MBO replay from
+    scratch, without reading the original <code>Book</code> code, and compared
+    outputs. One comparison lit up immediately: the independent reconstruction's
+    raw book was crossed <strong>0.00%</strong> of the time; the original's was
+    crossed <strong>92–100%</strong> of the time. A correctly maintained book
+    should essentially never cross. Ours crossed almost always, and a masking
+    helper had been hiding it.
+  </p>
+  <p>
+    An earlier version of our own handoff notes had even flagged the crossed-book
+    artifacts — and dismissed them as "not a bug in this stage, don't chase them."
+    That note was wrong, and it delayed the discovery. The artifact you explain
+    away is the artifact that owns you.
+  </p>
+
+  <h2>The fix, and what verification means now</h2>
+  <p>
+    The one-line description of the fix is boring: <code>Book.modify()</code> now
+    moves the order to its new price. The full panel was regenerated the same day
+    (1,005 files, zero errors). The interesting part is the verification standard
+    the bug forced on us: a second results-blind session, sampling ~150 random rows
+    per symbol-day across six liquid symbols, comparing against its own independent
+    reconstruction.
+  </p>
+  <table>
+    <thead><tr><th>Check</th><th>Before fix (ZN)</th><th>After fix</th></tr></thead>
+    <tbody>
+      <tr><td>Crossed-book rate, raw</td><td>92–100%</td><td>≤0.7%</td></tr>
+      <tr><td>l1 imbalance corr. vs truth</td><td>0.52</td><td>0.994–1.000</td></tr>
+      <tr><td>Sign agreement</td><td>81%</td><td>99–100%</td></tr>
+      <tr><td>Top-of-book size match</td><td>—</td><td>99–100%, zero median error</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Producer and checker are now different implementations by construction. The
+    original "verified correct" stamp had been issued by the same code path that
+    produced the data — which is to say, it verified nothing.
+  </p>
+
+  <h2>Lessons</h2>
+  <p>
+    <strong>1. Audit the quantities your pipeline doesn't display.</strong> Our
+    checks clustered around prices because prices are what you look at. The bug
+    lived in sizes because nothing ever looked at them.
+  </p>
+  <p>
+    <strong>2. Well-formed is not correct.</strong> Bounds checks, schema checks,
+    and NaN checks catch malformed data. They are silent on plausible garbage.
+  </p>
+  <p>
+    <strong>3. Independent reimplementation beats code review.</strong> The bug
+    survived audits of the code that contained it. It did not survive one afternoon
+    of comparison against a from-scratch replay written by someone who had never
+    seen the original.
+  </p>
+  <p>
+    <strong>4. Chase your anomalies.</strong> The crossed book was visible long
+    before the bug was found. It had been noticed, rationalized, and filed under
+    "known artifact." Every subtle bug we have found announced itself early as an
+    anomaly somebody explained away.
+  </p>
+
+  <p class="muted">
+    This is the first in a series of post-mortems on bugs that passed our checks.
+    The second — a look-ahead artifact that made a backtest three-quarters imaginary — is
+    <a href="/notes/lookahead-artifact.html">here</a>.
+  </p>
+</article>
+
+<footer>
+  &copy; 2026 Black Quantum · <a href="/">blackquantumgroup.com</a>
+</footer>
+
+</body>
+</html>

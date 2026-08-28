@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of a look-ahead artifact — Black Quantum</title>
+<meta name="description" content="A +92 bps/week backtest that fell to an insignificant +23 once two leaks were removed — the mechanisms, the tells, and the discipline that caught them.">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-soft: #0a0a0c;
+    --text: #ededf0;
+    --muted: #8b8b96;
+    --accent: #a78bfa;
+    --accent-dim: #6d5bb8;
+    --border: #1e1e26;
+    --max: 720px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.75; font-size: 17.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  ::selection { background: var(--accent-dim); color: #fff; }
+
+  nav {
+    position: sticky; top: 0;
+    background: rgba(0,0,0,0.78); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border); z-index: 10;
+  }
+  .nav-inner {
+    max-width: var(--max); margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 28px; font-size: 14.5px;
+  }
+  .nav-inner .brand { font-weight: 650; color: var(--text); letter-spacing: 0.02em; }
+
+  article { max-width: var(--max); margin: 0 auto; padding: 72px 28px 96px; }
+  .kicker {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--accent); font-weight: 600; margin-bottom: 16px;
+  }
+  h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px; }
+  .byline { color: var(--muted); font-size: 14.5px; margin-bottom: 44px; }
+  h2 { font-size: 1.35rem; font-weight: 650; letter-spacing: -0.01em; margin: 44px 0 14px; }
+  p { margin-bottom: 18px; }
+  p.muted { color: var(--muted); }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.88em; background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+  }
+  blockquote {
+    border-left: 2px solid var(--accent-dim);
+    padding: 4px 0 4px 20px; margin: 24px 0;
+    color: var(--muted); font-style: italic;
+  }
+  table {
+    width: 100%; border-collapse: collapse; margin: 24px 0;
+    font-size: 15px;
+  }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .callout {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px 26px; margin: 28px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 28px; text-align: center;
+    color: var(--muted); font-size: 13.5px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="brand" href="/">BLACK QUANTUM</a>
+    <a href="/#notes">← All notes</a>
+  </div>
+</nav>
+
+<article>
+  <div class="kicker">Notes · Adversarial evaluation</div>
+  <h1>Anatomy of a look-ahead artifact: the backtest that was three-quarters imaginary</h1>
+  <p class="byline">A +92 bps/week walk-forward result that fell to an insignificant +23 once two separate leaks were removed — and ended up losing to the simpler baseline it was supposed to beat. Published July 2026.</p>
+
+  <p>
+    This is the second post-mortem in our series on bugs that passed our checks
+    (the first, on a corrupted order-book reconstruction, is
+    <a href="/notes/phantom-size.html">here</a>). It is about look-ahead in its
+    two most seductive forms: neither was a mislabeled timestamp, and neither
+    would be caught by asking "does any feature use tomorrow's price?" Both were
+    architectural — and they stacked.
+  </p>
+
+  <h2>The setup</h2>
+  <p>
+    We were testing an architecture idea on CME energy futures: augment a
+    per-bar prediction model with a <em>daily regime feature</em> — a
+    low-dimensional summary of what kind of day the market is having, learned
+    from a large panel of technical and cross-sectional factors. Call the simple
+    baseline v4 and the regime-augmented model v6. The harness looked
+    respectable: 79 weeks of rolling walk-forward, retraining every 4 weeks,
+    intraday horizon, transaction costs included.
+  </p>
+
+  <h2>The number that was too good</h2>
+  <p>
+    v6 came back at <strong>+91.55 bps/week net, 84.8% positive weeks</strong>,
+    against a baseline around +33. The regime feature appeared to nearly triple
+    the edge. Every box a skeptic would ask about — walk-forward, out-of-sample,
+    net of costs — was checked. This is the moment that decides whether you have
+    a research process or a hype process.
+  </p>
+
+  <h2>Leak one: the features that were constants</h2>
+  <p>
+    Most of the feature panel was generated by engines that return a full time
+    series. A few engines, though, exposed only a
+    "give me all features" method that returned the <em>final bar's scalar
+    value</em>. Assigning a scalar to a DataFrame column broadcasts it to every
+    row. Result: <strong>218 of 274 features were per-symbol constants</strong> —
+    each one computed over the <em>full three-year history</em> and then pasted
+    onto every row, including rows three years before the value was knowable.
+  </p>
+  <p>
+    Why didn't they get filtered out? The harness dropped zero-variance columns —
+    but it computed variance <em>pooled across symbols</em>, and the constants
+    differ by symbol. So they survived, functioning as look-ahead-contaminated
+    fixed effects feeding a cross-sectional strategy. The tell, once we looked:
+    <code>nunique() == 1</code> per symbol, across every one of those columns.
+    One line of diagnostics, never run.
+  </p>
+
+  <h2>Leak two: the regime that knew tomorrow</h2>
+  <p>
+    The regime for day <em>t</em> was computed from <strong>all of day
+    <em>t</em>'s cross-section</strong> — including bars that hadn't happened
+    yet — then attached to every bar of day <em>t</em>. A model predicting at
+    10am knew the statistical character of the whole day, including the
+    afternoon. No individual timestamp was wrong. The leak lived in the
+    <em>aggregation boundary</em>: a per-day summary applied intraday is future
+    information for every bar before the close.
+  </p>
+
+  <h2>The decomposition</h2>
+  <p>
+    We removed the leaks one at a time, changing nothing else, on the same
+    79-week harness:
+  </p>
+  <table>
+    <thead><tr><th>Configuration</th><th>Net bps/week</th><th>Assessment</th></tr></thead>
+    <tbody>
+      <tr><td>Original v6 (both leaks)</td><td>+91.55</td><td>84.8% positive weeks</td></tr>
+      <tr><td>Constant features removed</td><td>+73.98</td><td>leak one ≈ 18 bps</td></tr>
+      <tr><td>Regime made strictly causal too</td><td>+23.02</td><td>t ≈ 1.3 — not significant</td></tr>
+      <tr><td>Simple v4 baseline, same window</td><td>+32.90</td><td>NW t ≈ 2.3, 72% positive weeks</td></tr>
+    </tbody>
+  </table>
+  <p>
+    Read the last two rows twice. Honestly measured, the sophisticated
+    architecture is <em>not significant</em> — and it is <em>worse than the
+    simple baseline</em> it had appeared to triple. Roughly three-quarters of the
+    headline number was artifact, and the bigger contribution (~51 bps of it) was
+    the regime leak — the one that a feature-level leakage scan can never see.
+  </p>
+  <div class="callout">
+    <p>
+      One day of foresight — not tomorrow's prices, just a summary of
+      <em>today's own character</em> — was worth ~51 bps/week of imaginary edge.
+      Leakage doesn't need to be dramatic to be fatal; it needs only to be
+      systematic.
+    </p>
+  </div>
+
+  <h2>What tipped us off</h2>
+  <p>
+    Three things, none of them a failing unit test:
+  </p>
+  <p>
+    <strong>An implausibly strong statistic.</strong> The contaminated run showed
+    a rank information coefficient of +0.18 on minute bars. Anyone who has worked
+    with intraday data knows that number is from another planet (the honest run's
+    +0.05 is a believable one). Calibrated priors about effect sizes are a
+    leakage detector.
+  </p>
+  <p>
+    <strong>Cross-context inconsistency.</strong> The same architecture was a
+    null result on a different market's data but a miracle on this one. When an
+    effect size varies wildly across contexts, suspect the measurement before the
+    world.
+  </p>
+  <p>
+    <strong>A mechanical causality question.</strong> The regime leak fell to one
+    question asked input-by-input: <em>"at the moment this bar's prediction is
+    made, is this value already known?"</em> The per-day aggregate failed it
+    instantly.
+  </p>
+
+  <h2>Pre-registration, so we couldn't move the goalposts</h2>
+  <p>
+    Before rerunning anything we wrote down the fix and the verdict criteria —
+    what would count as the architecture winning, losing, or inconclusive —
+    <strong>before seeing the results</strong>. From the internal retest
+    protocol, verbatim:
+  </p>
+  <blockquote>
+    "Report the verdict honestly whichever way it falls. The point of this
+    handoff is to be as skeptical of 'v6 is dead' as of 'v6 is +44 bps.'"
+  </blockquote>
+  <p>
+    A pre-registered fallback hypothesis — maybe the regime is useful as a risk
+    overlay rather than as alpha — also failed its causal test: gating exposure
+    by regime <em>reduced</em> out-of-sample Sharpe from 1.70 to 1.05. Both
+    verdicts were accepted as written. The +23 was not spun into a win, and the
+    architecture did not ship.
+  </p>
+
+  <h2>The uncomfortable epilogue</h2>
+  <p>
+    This was not our first over-claim on this line of research. Our internal
+    notes record four earlier claims that were retracted after null tests or
+    ablations — including a feature-selection method whose "significant" edge
+    turned out to match <em>random</em> selection exactly. Every retraction came
+    from our own testing rather than external correction, which is the system
+    working; that it took several cycles is the part we publish so we remember
+    it.
+  </p>
+
+  <h2>Lessons</h2>
+  <p>
+    <strong>1. Interrogate aggregation boundaries.</strong> Look-ahead hides in
+    summaries: daily statistics applied intraday, full-window normalizations,
+    regime labels, cluster assignments. Ask of every input: known at prediction
+    time, yes or no?
+  </p>
+  <p>
+    <strong>2. Run the dumb diagnostics.</strong> <code>nunique()</code> per
+    symbol would have exposed 218 broken features in one line. Variance filters,
+    like range checks, confirm data is well-formed — not that it is correct, and
+    not that it is causal.
+  </p>
+  <p>
+    <strong>3. Calibrate priors on effect sizes.</strong> A rank IC of +0.18 on
+    minute bars should trigger an investigation, not a celebration. The best
+    leakage detector we own is the sentence "that's too good."
+  </p>
+  <p>
+    <strong>4. Pre-register the retest.</strong> Writing win/lose/inconclusive
+    criteria before seeing results is cheap, and it is the only thing that
+    reliably stops a +23-with-SE-18 from being narrated into a victory.
+  </p>
+  <p>
+    <strong>5. The simple baseline is the real benchmark.</strong> The honest
+    comparison wasn't "is the number big" but "does the added machinery beat v4."
+    It didn't. Complexity has to pay rent under causal evaluation, or it goes.
+  </p>
+
+  <p class="muted">
+    Part one of this series — an order-book bug that corrupted every size-based
+    feature while passing a full audit — is
+    <a href="/notes/phantom-size.html">here</a>.
+  </p>
+</article>
+
+<footer>
+  &copy; 2026 Black Quantum · <a href="/">blackquantumgroup.com</a>
+</footer>
+
+</body>
+</html>
