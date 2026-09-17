@@ -183,7 +183,7 @@ a.problem-card:hover {
   border: 1px solid var(--line); border-radius: 16px; background: var(--surface);
   padding: 22px 22px 24px;
 }
-.tile .spot { height: 62px; margin-bottom: 14px; }
+.tile .spot { height: 150px; margin: -6px -6px 14px; }
 .tile .spot svg { width: 100%; height: 100%; display: block; }
 .tile .field {
   font-size: 0.72rem; font-weight: 650; letter-spacing: 0.12em;
@@ -390,6 +390,24 @@ figure.photo figcaption .credit { display: block; margin-top: 8px; font-size: 0.
 figure.photo figcaption a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line); }
 figure.photo figcaption a:hover { text-decoration-color: var(--blue); }
 .tile .spot a { display: block; height: 100%; }
-.tile .spot img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 8px; }
+.tile .spot img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 12px; transition: transform .5s ease; }
+.tile .spot a:hover img { transform: scale(1.03); }
+.tile .spot a { overflow: hidden; border-radius: 12px; }
 figure.photo.wide { max-width: none; margin: 44px 0 0; }
 figure.photo.wide figcaption { padding: 16px 22px 18px; }
+
+/* ---------- pictures page ---------- */
+.pic { padding: 56px 0; border-top: 1px solid var(--line); }
+.pic:first-of-type { border-top: 0; padding-top: 24px; }
+.pic .head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 32px; align-items: end; margin-bottom: 22px; }
+.pic .head h2 { font-size: 1.5rem; letter-spacing: -0.02em; font-weight: 600; line-height: 1.2; margin-top: 6px; max-width: 30ch; }
+.pic .head .tag { font-family: ui-monospace, Menlo, monospace; font-size: 0.78rem; color: var(--orange); white-space: nowrap; }
+@media (max-width: 640px) { .pic .head { grid-template-columns: 1fr; } }
+.pic figure.photo { margin: 0; }
+.pic figure.photo.tall { display: grid; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); }
+.pic figure.photo.tall img { height: 100%; object-fit: cover; }
+.pic figure.photo.tall figcaption { align-self: center; padding: 28px 30px; }
+@media (max-width: 760px) { .pic figure.photo.tall { grid-template-columns: 1fr; } .pic figure.photo.tall img { height: auto; } }
+.pic figure.photo figcaption { font-size: 0.95rem; color: var(--ink-2); padding: 18px 22px 20px; }
+.pic figure.photo figcaption strong { color: var(--ink); }
+.pic figure.photo figcaption .credit { font-size: 0.82rem; margin-top: 10px; }
